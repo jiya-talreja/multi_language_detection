@@ -87,37 +87,23 @@ async def detect_duplicates(
         raw_df = load_file(tmp_path)
         df = standardize_dataframe(raw_df, name_col=name_col, desc_col=desc_col)
         
-        # Ensure 'text' column logic is applied to preserve legacy 'text' or 'notes' fields
-        if 'text' in raw_df.columns:
-            df['text'] = raw_df['text'].fillna("").astype(str)
-        else:
-            df['text'] = df['description']
-            
-        # Extract fields for UI
-        if 'email' in raw_df.columns:
-            df['email'] = raw_df['email'].fillna("").astype(str)
-        else:
-            df['email'] = ""
-            
-        if 'phone' in raw_df.columns:
-            df['phone'] = raw_df['phone'].fillna("").astype(str)
-        else:
-            df['phone'] = ""
+        # 2. Extract auxiliary fields for UI if present in raw data
+        # We check raw_df columns because standardized_df currently only guarantees id, name, description, text, language
+        for col in ['email', 'phone', 'category', 'date']:
+            # Find the best match in raw_df for these auxiliary fields
+            matches = [c for c in raw_df.columns if col in str(c).lower()]
+            if matches:
+                df[col] = raw_df[matches[0]].fillna("").astype(str)
+            else:
+                df[col] = ""
 
-        # 2. Prepare text for embedding
-        def combine_and_clean(row):
-            combined = f"{row['name']} {row['description']}"
-            return clean_text(combined)
-
-        df["clean_text"] = df.apply(combine_and_clean, axis=1)
-        valid_mask = df["clean_text"].str.strip() != ""
-        
+        # 3. Filter and prepare for embedding
+        valid_mask = df["text"].str.strip() != ""
         if not valid_mask.any():
             raise HTTPException(status_code=400, detail="No usable text found in the dataset.")
             
         working_df = df[valid_mask].copy().reset_index(drop=True)
-        texts = working_df["clean_text"].tolist()
-
+        texts = working_df["text"].tolist()
         # 3. Embed
         print(f"Embedding {len(texts)} texts...")
         vectors = encode_dataset(texts, model_name=GLOBAL_MODEL_NAME)

@@ -26,23 +26,16 @@ def main():
         print(f"Failed to load dataset: {str(e)}")
         return
 
-    # Combine name and description, handling NaNs
-    print("Cleaning and combining text fields...")
-    def combine_and_clean(row):
-        name = row['name']
-        desc = row['description']
-        combined = f"{name} {desc}"
-        return clean_text(combined)
-
-    df["clean_text"] = df.apply(combine_and_clean, axis=1)
-
+    # The normalization layer already provides a 'text' column optimized for AI
+    print("Preparing AI-ready text...")
+    
     # Filter out empty records
-    valid_mask = df["clean_text"].str.strip() != ""
+    valid_mask = df["text"].str.strip() != ""
     if not valid_mask.all():
-        print(f"Dropping {len(df) - valid_mask.sum()} records with empty text after cleaning.")
+        print(f"Dropping {len(df) - valid_mask.sum()} records with empty text after normalization.")
         df = df[valid_mask].copy()
 
-    texts = df["clean_text"].tolist()
+    texts = df["text"].tolist()
 
     if not texts:
         print("No valid text data to process. Exiting.")

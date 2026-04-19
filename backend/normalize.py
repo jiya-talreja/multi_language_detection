@@ -2,6 +2,7 @@ import pandas as pd
 import pathlib
 import json
 import langid
+from utils import clean_text
 
 def detect_language(text: str) -> str:
     """
@@ -42,7 +43,11 @@ def load_file(file_path: str) -> pd.DataFrame:
             except UnicodeDecodeError:
                 return pd.read_csv(file_path, sep='\t', encoding='latin-1')
                 
-        elif ext in [".xls", ".xlsx"]:
+        elif ext == ".xlsx":
+            return pd.read_excel(file_path, engine='openpyxl')
+        elif ext == ".xls":
+            # For older .xls files, we'd need xlrd, but for now we'll try default 
+            # or openpyxl if it supports it (mostly it doesn't)
             return pd.read_excel(file_path)
             
         elif ext == ".json":
@@ -177,10 +182,6 @@ def standardize_dataframe(df: pd.DataFrame, name_col: str = None, desc_col: str 
         print("Detecting language from content...")
         # Combine name and description for better detection accuracy
         combined_text = result['name'] + " " + result['description']
-        
-        # Optimize by only detecting for the first 50 rows if the dataset is large, 
-        # or do it for all if it's manageable. For the UI preview, we might just need a few.
-        # But for full detection, we need all.
         result['language'] = combined_text.apply(detect_language)
         
     # --- Fallback: concatenate all string columns if we found literally nothing ---
@@ -195,5 +196,38 @@ def standardize_dataframe(df: pd.DataFrame, name_col: str = None, desc_col: str 
     name_has_content = result['name'].str.strip().ne("")
     if desc_empty.all() and name_has_content.any():
         result['description'] = result['name']
+
+    # 5. Combined Text for AI (The "Meaningful Data")
+    # We do this at the very end to capture any fallbacks or mirrors applied above
+    def create_ai_text(row):
+        name = str(row['name']).strip()
+        desc = str(row['description']).strip()
+        
+        # Handle empty cases
+        if not name and not desc:
+            return ""
+        if not name:
+            return clean_text(desc)
+        if not desc:
+            return clean_text(name)
+            
+        # Handle redundancies
+        n_low = name.lower()
+        d_low = desc.lower()
+        
+        if n_low == d_low:
+            return clean_text(name)
+            
+        # If name is a subset of description or vice versa
+        if n_low in d_low:
+            return clean_text(desc)
+        if d_low in n_low:
+            return clean_text(name)
+            
+        # Meaningful combination
+        combined = f"{name}: {desc}"
+        return clean_text(combined)
+
+    result['text'] = result.apply(create_ai_text, axis=1)
 
     return result

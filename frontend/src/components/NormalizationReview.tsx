@@ -5,6 +5,7 @@ interface NormalizedRecord {
   name: string;
   description: string;
   language: string;
+  text: string;
 }
 
 interface NormalizationReviewProps {
@@ -161,6 +162,18 @@ const s = {
     letterSpacing: '0.1em',
     marginTop: 4,
   },
+  
+  statValAi: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: '#6366F1',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+    marginBottom: 2,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+  } as React.CSSProperties,
 
   langPills: {
     display: 'flex',
@@ -277,10 +290,19 @@ const s = {
     color: '#854F0B',
     fontStyle: 'italic' as const,
   } as React.CSSProperties,
-
   tdEmpty: {
     color: '#ccc',
     fontStyle: 'italic' as const,
+  } as React.CSSProperties,
+
+  tdAi: {
+    maxWidth: 320,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+    color: '#4338CA',
+    background: 'rgba(99, 102, 241, 0.03)',
+    fontWeight: 450,
   } as React.CSSProperties,
 
   footer: {
@@ -363,7 +385,7 @@ const NormalizationReview: React.FC<NormalizationReviewProps> = ({
       </div>
 
       {/* Stats */}
-      <div style={s.stats}>
+      <div style={{...s.stats, gridTemplateColumns: 'repeat(5, 1fr)'}}>
         <div style={s.stat}>
           <div style={s.statVal}>{data.length.toLocaleString()}</div>
           <div style={s.statLabel}>Total rows</div>
@@ -373,33 +395,41 @@ const NormalizationReview: React.FC<NormalizationReviewProps> = ({
           <div style={s.statLabel}>Languages</div>
         </div>
         <div style={{ ...s.stat, ...s.statBorder }}>
+          <div style={s.statValAi}>
+            <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#6366F1' }} />
+            Ready for AI
+          </div>
+          <div style={s.statVal}>{data.filter(r => r.text?.trim()).length.toLocaleString()}</div>
+          <div style={s.statLabel}>Semantic Units</div>
+        </div>
+        <div style={{ ...s.stat, ...s.statBorder }}>
           <div style={{
             ...s.statValSm,
             color: isMirrored ? '#854F0B' : '#0F6E56',
           }}>
-            {isMirrored ? 'Mirrored from name' : 'Distinct column'}
+            {isMirrored ? 'Mirrored' : 'Distinct'}
           </div>
           <div style={s.statLabel}>Description</div>
         </div>
         <div style={{ ...s.stat, ...s.statBorder }}>
           <div style={s.langPills}>
-            {distinctLangs.slice(0, 5).map(lang => (
+            {distinctLangs.slice(0, 3).map(lang => (
               <span key={lang} style={{ ...s.pill, ...getLangStyle(lang) }}>
                 {lang}
               </span>
             ))}
-            {distinctLangs.length > 5 && (
+            {distinctLangs.length > 3 && (
               <span style={{
                 ...s.pill,
                 background: '#f1efe8',
                 color: '#888',
                 borderColor: '#ccc',
               }}>
-                +{distinctLangs.length - 5}
+                +{distinctLangs.length - 3}
               </span>
             )}
           </div>
-          <div style={{ ...s.statLabel, marginTop: 8 }}>Detected languages</div>
+          <div style={{ ...s.statLabel, marginTop: 8 }}>Detected</div>
         </div>
       </div>
 
@@ -432,6 +462,10 @@ const NormalizationReview: React.FC<NormalizationReviewProps> = ({
                   <span style={{ ...s.badge, ...s.badgeMirrored }}>mirrored</span>
                 )}
               </th>
+              <th style={{ ...s.th, color: '#4338CA', background: 'rgba(99, 102, 241, 0.05)' }}>
+                AI Combined Text
+                <span style={{ ...s.badge, background: '#EEEDFE', color: '#3C3489', borderColor: '#AFA9EC' }}>AI-Ready</span>
+              </th>
               <th style={s.th}>Language</th>
             </tr>
           </thead>
@@ -454,6 +488,9 @@ const NormalizationReview: React.FC<NormalizationReviewProps> = ({
                     ) : (
                       <span style={s.tdEmpty}>—</span>
                     )}
+                  </td>
+                  <td style={{ ...s.td, ...s.tdAi }}>
+                    {row.text || <span style={s.tdEmpty}>—</span>}
                   </td>
                   <td style={s.td}>
                     {row.language ? (
