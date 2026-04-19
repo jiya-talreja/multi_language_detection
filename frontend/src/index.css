@@ -145,3 +145,13 @@ html, body, #root {
   width: 2px;
   background: linear-gradient(to bottom, transparent, rgba(167,139,250,0.4), transparent);
 }
+
+/* Structured Workspace Grid */
+.bg-grid {
+  background-color: #fafafb;
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: center center;
+}
