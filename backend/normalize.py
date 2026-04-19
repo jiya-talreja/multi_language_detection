@@ -44,11 +44,21 @@ def load_file(file_path: str) -> pd.DataFrame:
                 return pd.read_csv(file_path, sep='\t', encoding='latin-1')
                 
         elif ext == ".xlsx":
-            return pd.read_excel(file_path, engine='openpyxl')
+            try:
+                return pd.read_excel(file_path, engine='openpyxl')
+            except Exception as e:
+                # If it's not a zip file, it might be a CSV renamed to .xlsx
+                if "not a zip file" in str(e).lower():
+                    try:
+                        return pd.read_csv(file_path)
+                    except:
+                        raise ValueError("The file has a .xlsx extension but is not a valid Excel file or CSV.")
+                raise e
         elif ext == ".xls":
-            # For older .xls files, we'd need xlrd, but for now we'll try default 
-            # or openpyxl if it supports it (mostly it doesn't)
-            return pd.read_excel(file_path)
+            try:
+                return pd.read_excel(file_path)
+            except Exception:
+                raise ValueError("Older Excel (.xls) files are not supported. Please save as .xlsx or .csv.")
             
         elif ext == ".json":
             # Pandas read_json is sometimes picky about formats (records vs split).
