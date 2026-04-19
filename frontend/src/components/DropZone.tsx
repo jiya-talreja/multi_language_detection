@@ -60,7 +60,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFileAccepted }) => {
         whileHover={{ scale: 1.01, y: -2 }}
         whileTap={{ scale: 0.99 }}
       >
-        <input id="file-input" type="file" className="hidden" onChange={handleFileInput} />
+        <input id="file-input" type="file" className="hidden" onChange={handleFileInput} accept=".csv,.tsv,.xlsx,.xls,.json,.xml" />
 
         <AnimatePresence mode="wait">
           {!file ? (
@@ -84,8 +84,8 @@ const DropZone: React.FC<DropZoneProps> = ({ onFileAccepted }) => {
                 </p>
               </div>
 
-              <div className="flex gap-2">
-                {['CSV', 'XLSX', 'JSON'].map(fmt => (
+              <div className="flex gap-2 flex-wrap justify-center">
+                {['CSV', 'TSV', 'XLSX', 'JSON', 'XML'].map(fmt => (
                   <span key={fmt} className="text-[0.6rem] font-medium tracking-wider px-2.5 py-1 rounded-md bg-white/50 border border-white/80 shadow-sm text-gray-500">
                     {fmt}
                   </span>
