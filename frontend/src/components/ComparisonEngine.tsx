@@ -47,7 +47,7 @@ const ComparisonEngine: React.FC<ComparisonEngineProps> = ({ pairs, resolved, on
           </h2>
         </div>
 
-        <div className="bg-white/60 backdrop-blur-3xl rounded-[3rem] border border-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] flex items-center divide-x divide-slate-100 overflow-hidden">
+        <div className="bg-white/30 backdrop-blur-2xl rounded-[3rem] border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] flex items-center divide-x divide-white/10 overflow-hidden">
           <StatBox 
             icon={<Layers size={20} />} 
             label="Pairs Detected" 
