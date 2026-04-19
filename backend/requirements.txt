@@ -1,0 +1,11 @@
+pandas
+numpy
+sentence-transformers
+scikit-learn
+pytest
+openpyxl
+lxml
+fastapi
+uvicorn
+python-multipart
+langid
