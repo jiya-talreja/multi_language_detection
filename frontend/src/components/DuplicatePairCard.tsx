@@ -1,8 +1,13 @@
 import React, { useRef } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { Check, X, ArrowRight, Shield, Globe } from 'lucide-react';
+import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+export interface DuplicateRecord {
+  id: string;
+  name: string;
+  text?: string;
+  language: string;
+}
+
 export interface DuplicatePair {
   id: string;
   recordA: DuplicateRecord;
@@ -10,91 +15,236 @@ export interface DuplicatePair {
   similarity: number;
 }
 
-export interface DuplicateRecord {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  text?: string;
-  language: string;
-  languageCode: string;
-}
-
-// ─── Language Badge ────────────────────────────────────────────────────────────
-const LanguageBadge: React.FC<{ lang: string }> = ({ lang }) => (
-  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50/80 text-indigo-700 text-[10px] font-semibold tracking-wider uppercase border border-indigo-100/50">
-    <Globe size={10} strokeWidth={2.5} />
-    {lang}
-  </span>
-);
-
-// ─── Record Details ────────────────────────────────────────────────────────────
-const RecordPanel: React.FC<{ record: DuplicateRecord; side: 'left' | 'right' }> = ({ record, side }) => {
-  return (
-    <div className={`flex flex-col gap-4 p-8 ${side === 'left' ? 'items-end text-right' : 'items-start text-left'}`}>
-      <div className={`flex items-center gap-3 ${side === 'left' ? 'flex-row-reverse' : 'flex-row'}`}>
-        <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 font-mono text-[10px] border border-slate-100">
-           ID
-        </div>
-        <span className="text-slate-400 font-mono text-xs tracking-tight">#{record.id}</span>
-        <LanguageBadge lang={record.language} />
-      </div>
-
-      <div className="space-y-1">
-        <h3 className="text-xl font-medium text-slate-900 leading-snug tracking-tight">
-          {record.name}
-        </h3>
-        {record.email && (
-          <p className="text-sm text-slate-500 font-light">{record.email}</p>
-        )}
-      </div>
-
-      {record.text && (
-        <div className={`max-w-sm p-4 rounded-2xl bg-white/40 border border-white/60 shadow-inner relative group`}>
-          <div className={`absolute top-0 ${side === 'left' ? 'right-4' : 'left-4'} -translate-y-1/2 px-2 bg-slate-50 rounded text-[9px] font-bold text-slate-400 uppercase tracking-widest`}>
-            Extracted Context
-          </div>
-          <p className="text-[13px] text-slate-600 leading-relaxed font-light italic">
-            "{record.text}"
-          </p>
-        </div>
-      )}
-
-      {(record.phone) && (
-        <div className="flex gap-4">
-          {record.phone && (
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <span className="text-[10px] font-bold uppercase tracking-tighter opacity-50">Phone:</span>
-              <span className="text-xs font-medium">{record.phone}</span>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ─── Main Pair Card ───────────────────────────────────────────────────────────
 interface DuplicatePairCardProps {
   pair: DuplicatePair;
+  isResolved?: boolean;
   onResolve: (id: string, action: 'keep' | 'remove') => void;
+  onRedo?: (id: string) => void;
 }
 
-const DuplicatePairCard: React.FC<DuplicatePairCardProps> = ({ pair, onResolve }) => {
+const s: Record<string, React.CSSProperties> = {
+  wrapper: {
+    width: '100%',
+    maxWidth: 920,
+    margin: '0 auto 28px',
+  },
+  card: {
+    background: '#fff',
+    border: '0.5px solid rgba(0,0,0,0.1)',
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative' as const,
+  },
+  body: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 108px 1fr',
+    alignItems: 'center',
+    padding: '28px 28px 20px',
+    gap: 0,
+  },
+  side: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+  sideRight: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    alignItems: 'flex-end',
+    textAlign: 'right',
+  },
+  tag: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '3px 9px',
+    background: '#f4f4f2',
+    border: '0.5px solid rgba(0,0,0,0.1)',
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: 500,
+    color: '#555',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.07em',
+    width: 'fit-content',
+  },
+  tagDot: {
+    width: 5,
+    height: 5,
+    borderRadius: '50%',
+    background: '#bbb',
+    flexShrink: 0,
+  },
+  name: {
+    fontSize: 20,
+    fontWeight: 500,
+    color: '#111',
+    lineHeight: 1.35,
+    margin: 0,
+  },
+  text: {
+    fontSize: 14,
+    color: '#999',
+    fontStyle: 'italic' as const,
+    lineHeight: 1.6,
+    margin: 0,
+  },
+  center: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative' as const,
+  },
+  simBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 3,
+    padding: '12px 16px',
+    background: '#f7f7f5',
+    border: '0.5px solid rgba(0,0,0,0.08)',
+    borderRadius: 10,
+    zIndex: 1,
+    position: 'relative' as const,
+  },
+  simNum: {
+    fontSize: 26,
+    fontWeight: 500,
+    color: '#111',
+    lineHeight: 1,
+    letterSpacing: '-0.02em',
+  },
+  simLabel: {
+    fontSize: 10,
+    fontWeight: 500,
+    color: '#aaa',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.12em',
+  },
+  lineLeft: {
+    position: 'absolute' as const,
+    top: '50%',
+    right: '50%',
+    width: '50%',
+    height: '0.5px',
+    background: 'rgba(0,0,0,0.07)',
+    transform: 'translateY(-50%)',
+    zIndex: 0,
+  },
+  lineRight: {
+    position: 'absolute' as const,
+    top: '50%',
+    left: '50%',
+    width: '50%',
+    height: '0.5px',
+    background: 'rgba(0,0,0,0.07)',
+    transform: 'translateY(-50%)',
+    zIndex: 0,
+  },
+  divider: {
+    height: '0.5px',
+    background: 'rgba(0,0,0,0.07)',
+    margin: '0 28px',
+  },
+  footer: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr 1fr',
+    gap: 8,
+    padding: '16px 28px 24px',
+  },
+  btnKeep: {
+    fontFamily: 'inherit',
+    fontSize: 13,
+    fontWeight: 500,
+    padding: '10px 0',
+    borderRadius: 9,
+    border: '0.5px solid rgba(0,0,0,0.14)',
+    background: '#fff',
+    color: '#444',
+    cursor: 'pointer',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnRemove: {
+    fontFamily: 'inherit',
+    fontSize: 13,
+    fontWeight: 500,
+    padding: '10px 0',
+    borderRadius: 9,
+    border: '0.5px solid rgba(200,50,50,0.22)',
+    background: 'rgba(200,50,50,0.04)',
+    color: '#b03030',
+    cursor: 'pointer',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnMerge: {
+    fontFamily: 'inherit',
+    fontSize: 13,
+    fontWeight: 500,
+    padding: '10px 0',
+    borderRadius: 9,
+    border: '0.5px solid transparent',
+    background: '#111',
+    color: '#fff',
+    cursor: 'pointer',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  resolvedOverlay: {
+    position: 'absolute' as const,
+    inset: 0,
+    background: '#fff',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    zIndex: 10,
+  },
+  resolvedText: {
+    fontSize: 18,
+    fontWeight: 400,
+    color: '#111',
+    letterSpacing: '-0.01em',
+  },
+  btnRedo: {
+    fontFamily: 'inherit',
+    fontSize: 12,
+    fontWeight: 600,
+    padding: '8px 20px',
+    borderRadius: 6,
+    border: '0.5px solid rgba(0,0,0,0.1)',
+    background: '#f7f7f5',
+    color: '#666',
+    cursor: 'pointer',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.08em',
+  },
+};
+
+const DuplicatePairCard: React.FC<DuplicatePairCardProps> = ({ pair, isResolved, onResolve, onRedo }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const rotateX = useSpring(useTransform(y, [-100, 100], [5, -5]), { stiffness: 100, damping: 30 });
-  const rotateY = useSpring(useTransform(x, [-100, 100], [-5, 5]), { stiffness: 100, damping: 30 });
+  const rotateX = useSpring(useTransform(y, [-100, 100], [3, -3]), { stiffness: 100, damping: 30 });
+  const rotateY = useSpring(useTransform(x, [-100, 100], [-3, 3]), { stiffness: 100, damping: 30 });
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!cardRef.current) return;
+    if (isResolved || !cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    x.set(e.clientX - centerX);
-    y.set(e.clientY - centerY);
+    x.set(e.clientX - (rect.left + rect.width / 2));
+    y.set(e.clientY - (rect.top + rect.height / 2));
   };
 
   const handleMouseLeave = () => {
@@ -102,105 +252,112 @@ const DuplicatePairCard: React.FC<DuplicatePairCardProps> = ({ pair, onResolve }
     y.set(0);
   };
 
-  const matchPercent = Math.round(pair.similarity * 100);
-  const matchColor = matchPercent > 90 ? '#6366f1' : matchPercent > 70 ? '#f59e0b' : '#10b981';
-
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
-      className="group relative"
+      exit={{ opacity: 0, scale: 0.96, filter: 'blur(8px)' }}
+      style={s.wrapper}
     >
       <motion.div
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-        className="w-full bg-white/25 backdrop-blur-3xl border border-white/40 rounded-[3.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.12)] overflow-hidden"
+        style={{ ...s.card, rotateX, rotateY, transformStyle: 'preserve-3d' } as React.CSSProperties}
       >
-        {/* Top Indicator */}
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
-          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/40 backdrop-blur-md border border-white/20 shadow-sm">
-            <Shield size={12} className="text-indigo-500" />
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">High Confidence Match</span>
+        <AnimatePresence>
+          {isResolved && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={s.resolvedOverlay}
+            >
+              <span style={s.resolvedText}>Resolved</span>
+              <motion.button
+                whileHover={{ background: '#eee' }}
+                whileTap={{ scale: 0.95 }}
+                style={s.btnRedo}
+                onClick={() => onRedo?.(pair.id)}
+              >
+                Re-do
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div style={{ ...s.body, opacity: isResolved ? 0 : 1, transition: 'opacity 0.3s' }}>
+          {/* Record A */}
+          <div style={s.side}>
+            <span style={s.tag}>
+              <span style={s.tagDot} />
+              Source A · {pair.recordA.language}
+            </span>
+            <p style={s.name}>{pair.recordA.name}</p>
+            {pair.recordA.text && (
+              <p style={s.text}>"{pair.recordA.text}"</p>
+            )}
+          </div>
+
+          {/* Similarity center */}
+          <div style={s.center}>
+            <span style={s.lineLeft} />
+            <span style={s.lineRight} />
+            <div style={s.simBox}>
+              <span style={s.simNum}>{Math.round(pair.similarity * 100)}%</span>
+              <span style={s.simLabel}>match</span>
+            </div>
+          </div>
+
+          {/* Record B */}
+          <div style={s.sideRight}>
+            <span style={{ ...s.tag, alignSelf: 'flex-end' }}>
+              Source B · {pair.recordB.language}
+              <span style={s.tagDot} />
+            </span>
+            <p style={s.name}>{pair.recordB.name}</p>
+            {pair.recordB.text && (
+              <p style={s.text}>"{pair.recordB.text}"</p>
+            )}
           </div>
         </div>
 
-        {/* Content Layout */}
-        <div className="relative grid grid-cols-[1fr_auto_1fr] items-center">
-          <RecordPanel record={pair.recordA} side="left" />
+        <div style={{ ...s.divider, opacity: isResolved ? 0 : 1 }} />
 
-          {/* Central Hub */}
-          <div className="relative py-12 flex flex-col items-center justify-center">
-             {/* Connection Line */}
-             <div className="absolute inset-y-0 left-1/2 w-[1px] bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-             
-             <motion.div 
-               whileHover={{ scale: 1.1, rotate: 5 }}
-               className="relative z-10 w-24 h-24 rounded-full bg-white shadow-2xl border-4 border-slate-50 flex flex-col items-center justify-center cursor-help"
-             >
-                <div 
-                  className="absolute inset-0 rounded-full opacity-10" 
-                  style={{ background: matchColor, filter: 'blur(12px)' }} 
-                />
-                <span className="text-2xl font-bold tracking-tighter" style={{ color: matchColor }}>
-                  {matchPercent}%
-                </span>
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Match</span>
-                
-                {/* SVG Progress ring */}
-                <svg className="absolute inset-0 w-full h-full -rotate-90">
-                  <circle
-                    cx="48" cy="48" r="44"
-                    fill="none"
-                    stroke={matchColor}
-                    strokeWidth="2"
-                    strokeDasharray={276}
-                    strokeDashoffset={276 - (276 * pair.similarity)}
-                    strokeLinecap="round"
-                    className="opacity-20"
-                  />
-                </svg>
-             </motion.div>
-          </div>
+        {/* Footer */}
+        <div style={{ ...s.footer, opacity: isResolved ? 0 : 1, pointerEvents: isResolved ? 'none' : 'auto' }}>
+          <motion.button
+            whileHover={{ opacity: 0.7 }}
+            whileTap={{ scale: 0.97 }}
+            style={s.btnKeep}
+            onClick={() => onResolve(pair.id, 'keep')}
+          >
+            Keep both
+          </motion.button>
 
-          <RecordPanel record={pair.recordB} side="right" />
-        </div>
+          <motion.button
+            whileHover={{ opacity: 0.7 }}
+            whileTap={{ scale: 0.97 }}
+            style={s.btnRemove}
+            onClick={() => onResolve(pair.id, 'remove')}
+          >
+            Remove duplicate
+          </motion.button>
 
-        {/* Actions Bar */}
-        <div className="bg-white/10 backdrop-blur-md border-t border-white/10 p-8 flex items-center justify-center gap-6">
-           <button 
-             onClick={() => onResolve(pair.id, 'keep')}
-             className="px-8 py-3 rounded-2xl bg-white border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm"
-           >
-             Keep Both
-           </button>
-           
-           <div className="w-[1px] h-6 bg-slate-200" />
-           
-           <button 
-             onClick={() => onResolve(pair.id, 'remove')}
-             className="px-8 py-3 rounded-2xl bg-white border border-red-100 text-red-500 text-sm font-semibold hover:bg-red-50 transition-all active:scale-95 shadow-sm"
-           >
-             Remove Duplicate
-           </button>
-
-           <button 
-             onClick={() => onResolve(pair.id, 'keep')}
-             className="group relative px-10 py-3.5 rounded-2xl bg-slate-900 text-white text-sm font-bold overflow-hidden shadow-xl shadow-slate-200 hover:shadow-indigo-500/20 transition-all active:scale-95"
-           >
-             <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-             <span className="relative z-10 flex items-center gap-2">
-                Merge Records <ArrowRight size={16} />
-             </span>
-           </button>
+          <motion.button
+            whileHover={{ opacity: 0.85 }}
+            whileTap={{ scale: 0.97 }}
+            style={s.btnMerge}
+            onClick={() => onResolve(pair.id, 'keep')}
+          >
+            Merge records
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
+            </svg>
+          </motion.button>
         </div>
       </motion.div>
-
-      {/* Background Decorative Element */}
-      <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/5 via-transparent to-violet-500/5 blur-3xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
     </motion.div>
   );
 };
