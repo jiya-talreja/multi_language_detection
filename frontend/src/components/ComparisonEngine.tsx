@@ -7,28 +7,22 @@ import { Layers, Zap, Sparkles, CheckCircle2 } from 'lucide-react';
 interface ComparisonEngineProps {
   pairs: DuplicatePair[];
   resolved: number;
+  resolvedIds: Set<string>;
   onResolve: (id: string, action: 'keep' | 'remove') => void;
+  onRedo: (id: string) => void;
 }
 
-const StatBox: React.FC<{ icon: React.ReactNode; label: string; value: string | number; gradient: string }> = ({
-  icon, label, value, gradient,
+const StatBox: React.FC<{ label: string; value: string | number }> = ({
+  label, value
 }) => (
-  <div className="relative group px-12 py-8 min-w-[200px]">
-    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-[0.03] group-hover:opacity-[0.06] transition-opacity`} />
-    <div className="relative flex flex-col items-center gap-3">
-      <div className="p-2.5 rounded-xl bg-white shadow-sm border border-slate-50 text-slate-400 group-hover:text-slate-600 transition-colors">
-        {icon}
-      </div>
-      <div className="flex flex-col items-center text-center">
-        <span className="text-3xl font-bold text-slate-900 tracking-tight leading-none">{value}</span>
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 whitespace-nowrap">{label}</span>
-      </div>
-    </div>
+  <div className="relative px-20 py-12 flex flex-col items-center gap-4">
+    <span className="text-6xl font-extralight text-slate-900 tracking-tighter leading-none">{value}</span>
+    <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] whitespace-nowrap">{label}</span>
   </div>
 );
 
-const ComparisonEngine: React.FC<ComparisonEngineProps> = ({ pairs, resolved, onResolve }) => {
-  const total = pairs.length + resolved;
+const ComparisonEngine: React.FC<ComparisonEngineProps> = ({ pairs, resolved, resolvedIds, onResolve, onRedo }) => {
+  const total = pairs.length;
   const avgSimilarity = total > 0
     ? (pairs.reduce((s, p) => s + p.similarity, 0) / total * 100).toFixed(0)
     : 0;
@@ -37,72 +31,56 @@ const ComparisonEngine: React.FC<ComparisonEngineProps> = ({ pairs, resolved, on
     <motion.section
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full max-w-6xl mx-auto space-y-12 pb-32"
+      className="w-full max-w-6xl mx-auto space-y-24 pb-32"
     >
       {/* Header & Stats */}
-      <div className="flex flex-col items-center gap-10">
-        <div className="text-center space-y-2">
-          <h2 className="text-4xl font-light text-slate-900 tracking-tight">
+      <div className="flex flex-col items-center gap-16 pt-12">
+        <div className="text-center">
+          <h2 className="text-6xl font-extralight text-slate-900 tracking-tighter">
             Detected <span className="font-semibold italic">Duplicates</span>
           </h2>
         </div>
 
-        <div className="bg-white/30 backdrop-blur-2xl rounded-[3rem] border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] flex items-center divide-x divide-white/10 overflow-hidden">
+        <div className="flex items-center justify-center gap-8 bg-slate-900/[0.02] backdrop-blur-sm rounded-full border border-slate-900/5 px-8">
           <StatBox 
-            icon={<Layers size={20} />} 
             label="Pairs Detected" 
             value={total} 
-            gradient="from-blue-500 to-indigo-500" 
           />
+          <div className="w-px h-12 bg-slate-900/10" />
           <StatBox 
-            icon={<Zap size={20} />} 
             label="Confidence" 
             value={`${avgSimilarity}%`} 
-            gradient="from-amber-500 to-orange-500" 
           />
+          <div className="w-px h-12 bg-slate-900/10" />
           <StatBox 
-            icon={<CheckCircle2 size={20} />} 
             label="Resolved" 
             value={resolved} 
-            gradient="from-emerald-500 to-teal-500" 
           />
-          <div className="px-12 py-8 flex items-center justify-center min-w-[160px]">
-             <div className="w-20 h-20 rounded-full border-4 border-slate-50 flex items-center justify-center relative overflow-hidden shadow-inner bg-slate-50/30">
+          <div className="w-px h-12 bg-slate-900/10" />
+          <div className="px-12 py-10 flex items-center justify-center">
+             <div className="w-16 h-16 rounded-full border-2 border-slate-200 flex items-center justify-center relative overflow-hidden bg-white shadow-sm">
                 <motion.div 
                   initial={{ height: 0 }}
                   animate={{ height: `${(resolved / total) * 100}%` }}
-                  className="absolute bottom-0 inset-x-0 bg-indigo-500/10"
+                  className="absolute bottom-0 inset-x-0 bg-emerald-500/10"
                 />
-                <span className="text-[13px] font-black text-slate-400 z-10">{Math.round((resolved / total) * 100)}%</span>
+                <span className="text-[11px] font-black text-emerald-600 z-10">{Math.round((resolved / total) * 100)}%</span>
              </div>
           </div>
         </div>
       </div>
 
-      {/* Progress Line */}
-      <div className="w-full max-w-4xl mx-auto px-12">
-        <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-          <span>Analysis Progress</span>
-          <span>{resolved} / {total} records cleaned</span>
-        </div>
-        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: `${(resolved / total) * 100}%` }}
-            className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
-          />
-        </div>
-      </div>
-
       {/* Pairs Feed */}
-      <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-12">
         <AnimatePresence mode="popLayout">
           {pairs.length > 0 ? (
             pairs.map((pair) => (
               <DuplicatePairCard
                 key={pair.id}
                 pair={pair}
+                isResolved={resolvedIds.has(pair.id)}
                 onResolve={onResolve}
+                onRedo={onRedo}
               />
             ))
           ) : (
@@ -116,7 +94,7 @@ const ComparisonEngine: React.FC<ComparisonEngineProps> = ({ pairs, resolved, on
                   <Sparkles className="text-emerald-500" size={40} />
                 </div>
                 <div className="text-center space-y-1">
-                  <h3 className="text-2xl font-medium text-slate-900">Database Sanitized</h3>
+                  <h3 className="text-3xl font-light text-slate-900">Database Sanitized</h3>
                   <p className="text-slate-500 font-light">All detected duplicates have been successfully resolved.</p>
                 </div>
               </motion.div>
