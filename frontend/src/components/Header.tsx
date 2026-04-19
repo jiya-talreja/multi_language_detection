@@ -15,9 +15,6 @@ const Header: React.FC = () => {
             <span className="text-xl font-semibold tracking-tight text-[#1a1a2e]">
               JN<span className="text-violet-600">.ai</span>
             </span>
-            <span className="text-[10px] uppercase tracking-widest text-[#1a1a2e]/50 font-medium">
-              Multilingual
-            </span>
           </div>
         </div>
       </div>
