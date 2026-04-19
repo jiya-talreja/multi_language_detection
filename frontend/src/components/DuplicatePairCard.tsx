@@ -118,11 +118,11 @@ const DuplicatePairCard: React.FC<DuplicatePairCardProps> = ({ pair, onResolve }
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-        className="w-full bg-white/60 backdrop-blur-3xl border border-white/80 rounded-[2.5rem] shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08)] overflow-hidden"
+        className="w-full bg-white/25 backdrop-blur-3xl border border-white/40 rounded-[3.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.12)] overflow-hidden"
       >
         {/* Top Indicator */}
         <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
-          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/40 backdrop-blur-md border border-white/20 shadow-sm">
             <Shield size={12} className="text-indigo-500" />
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">High Confidence Match</span>
           </div>
@@ -135,7 +135,7 @@ const DuplicatePairCard: React.FC<DuplicatePairCardProps> = ({ pair, onResolve }
           {/* Central Hub */}
           <div className="relative py-12 flex flex-col items-center justify-center">
              {/* Connection Line */}
-             <div className="absolute inset-y-0 left-1/2 w-[1px] bg-gradient-to-b from-transparent via-slate-200 to-transparent" />
+             <div className="absolute inset-y-0 left-1/2 w-[1px] bg-gradient-to-b from-transparent via-white/20 to-transparent" />
              
              <motion.div 
                whileHover={{ scale: 1.1, rotate: 5 }}
@@ -170,7 +170,7 @@ const DuplicatePairCard: React.FC<DuplicatePairCardProps> = ({ pair, onResolve }
         </div>
 
         {/* Actions Bar */}
-        <div className="bg-slate-50/50 border-t border-slate-100 p-6 flex items-center justify-center gap-4">
+        <div className="bg-white/10 backdrop-blur-md border-t border-white/10 p-8 flex items-center justify-center gap-6">
            <button 
              onClick={() => onResolve(pair.id, 'keep')}
              className="px-8 py-3 rounded-2xl bg-white border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm"
