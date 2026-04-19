@@ -40,7 +40,7 @@ function getLangStyle(lang: string): React.CSSProperties {
 const s = {
   root: {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    background: '#fff',
+    background: 'transparent',
     width: '100%',
     height: '100%',
     display: 'flex',
@@ -48,198 +48,211 @@ const s = {
   } as React.CSSProperties,
 
   header: {
-    padding: '32px 40px',
-    borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+    padding: '48px 40px',
+    borderBottom: '1px solid rgba(255,255,255,0.1)',
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 32,
+    background: 'rgba(255,255,255,0.7)',
+    backdropFilter: 'blur(20px)',
   } as React.CSSProperties,
 
   statusRow: {
     display: 'flex',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 6,
+    marginBottom: 8,
   } as React.CSSProperties,
 
   statusDot: {
-    width: 7,
-    height: 7,
+    width: 8,
+    height: 8,
     borderRadius: '50%',
     background: '#1D9E75',
     flexShrink: 0,
+    boxShadow: '0 0 12px rgba(29, 158, 117, 0.4)',
   } as React.CSSProperties,
 
   statusLabel: {
     fontSize: 11,
-    fontWeight: 500,
+    fontWeight: 600,
     color: '#0F6E56',
-    letterSpacing: '0.08em',
+    letterSpacing: '0.1em',
     textTransform: 'uppercase' as const,
   },
 
   title: {
-    fontSize: 32,
-    fontWeight: 300,
+    fontSize: 48,
+    fontWeight: 200,
     color: '#111',
-    lineHeight: 1.2,
-    letterSpacing: '-0.02em',
+    lineHeight: 1.1,
+    letterSpacing: '-0.03em',
   } as React.CSSProperties,
 
   subtitle: {
-    fontSize: 15,
-    color: '#999',
-    marginTop: 8,
+    fontSize: 16,
+    color: '#666',
+    marginTop: 12,
     letterSpacing: '0.01em',
   } as React.CSSProperties,
 
   btnRow: {
     display: 'flex',
-    gap: 8,
+    gap: 12,
     flexShrink: 0,
-    paddingTop: 2,
+    paddingTop: 8,
   } as React.CSSProperties,
 
   btnCancel: {
     fontFamily: 'inherit',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 500,
-    padding: '7px 16px',
-    borderRadius: 8,
-    border: '0.5px solid rgba(0,0,0,0.18)',
-    background: 'transparent',
+    padding: '10px 24px',
+    borderRadius: 12,
+    border: '1px solid rgba(0,0,0,0.1)',
+    background: 'rgba(255,255,255,0.5)',
     color: '#444',
     cursor: 'pointer',
+    transition: 'all 0.2s ease',
   } as React.CSSProperties,
 
   btnPrimary: {
     fontFamily: 'inherit',
-    fontSize: 13,
-    fontWeight: 500,
-    padding: '7px 16px',
-    borderRadius: 8,
-    border: '0.5px solid transparent',
+    fontSize: 14,
+    fontWeight: 600,
+    padding: '10px 28px',
+    borderRadius: 12,
+    border: 'none',
     background: '#111',
     color: '#fff',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+    boxShadow: '0 10px 20px rgba(0,0,0,0.15)',
   } as React.CSSProperties,
 
   stats: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
-    borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+    gridTemplateColumns: 'repeat(5, 1fr)',
+    borderBottom: '1px solid rgba(255,255,255,0.1)',
+    background: 'rgba(255,255,255,0.4)',
+    backdropFilter: 'blur(10px)',
   } as React.CSSProperties,
 
   stat: {
-    padding: '24px 36px',
+    padding: '32px 40px',
   } as React.CSSProperties,
 
   statBorder: {
-    borderLeft: '0.5px solid rgba(0,0,0,0.1)',
+    borderLeft: '1px solid rgba(0,0,0,0.05)',
   } as React.CSSProperties,
 
   statVal: {
-    fontSize: 36,
-    fontWeight: 300,
+    fontSize: 40,
+    fontWeight: 200,
     color: '#111',
-    lineHeight: 1.1,
+    lineHeight: 1,
   } as React.CSSProperties,
 
   statValSm: {
     fontSize: 14,
-    fontWeight: 500,
+    fontWeight: 600,
     marginTop: 4,
     lineHeight: 1.3,
   } as React.CSSProperties,
 
   statLabel: {
     fontSize: 11,
-    fontWeight: 500,
-    color: '#999',
+    fontWeight: 600,
+    color: '#888',
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.1em',
-    marginTop: 4,
+    letterSpacing: '0.12em',
+    marginTop: 8,
   },
   
   statValAi: {
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 700,
     color: '#6366F1',
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
-    marginBottom: 2,
+    letterSpacing: '0.08em',
+    marginBottom: 4,
     display: 'flex',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   } as React.CSSProperties,
 
   langPills: {
     display: 'flex',
     flexWrap: 'wrap' as const,
-    gap: 5,
-    marginTop: 2,
+    gap: 6,
+    marginTop: 4,
   } as React.CSSProperties,
 
   pill: {
     fontSize: 11,
-    fontWeight: 500,
-    padding: '3px 8px',
-    borderRadius: 6,
-    border: '0.5px solid',
+    fontWeight: 600,
+    padding: '4px 10px',
+    borderRadius: 8,
+    border: '1px solid',
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.06em',
+    letterSpacing: '0.05em',
   } as React.CSSProperties,
 
   warnBanner: {
     display: 'flex',
     alignItems: 'flex-start',
-    gap: 10,
-    padding: '12px 28px',
-    background: '#FAEEDA',
-    borderBottom: '0.5px solid #EF9F27',
+    gap: 12,
+    padding: '16px 40px',
+    background: 'rgba(250, 238, 218, 0.7)',
+    backdropFilter: 'blur(10px)',
+    borderBottom: '1px solid rgba(239, 159, 39, 0.3)',
   } as React.CSSProperties,
 
   warnText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#633806',
-    lineHeight: 1.5,
+    lineHeight: 1.6,
   } as React.CSSProperties,
 
   tableWrap: {
     overflowX: 'auto' as const,
     flex: 1,
+    background: 'rgba(255,255,255,0.2)',
   },
 
   table: {
     width: '100%',
     borderCollapse: 'collapse' as const,
-    fontSize: 13,
+    fontSize: 14,
   } as React.CSSProperties,
 
   th: {
-    padding: '10px 16px',
+    padding: '16px 24px',
     textAlign: 'left' as const,
     fontSize: 11,
-    fontWeight: 500,
-    color: '#999',
+    fontWeight: 600,
+    color: '#666',
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.1em',
-    background: '#f9f9f8',
-    borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+    letterSpacing: '0.12em',
+    background: 'rgba(255,255,255,0.8)',
+    backdropFilter: 'blur(10px)',
+    borderBottom: '1px solid rgba(0,0,0,0.05)',
     whiteSpace: 'nowrap' as const,
+    position: 'sticky' as const,
+    top: 0,
+    zIndex: 20,
   } as React.CSSProperties,
 
   badge: {
     fontSize: 10,
-    fontWeight: 500,
-    padding: '2px 6px',
-    borderRadius: 4,
-    border: '0.5px solid',
-    marginLeft: 6,
+    fontWeight: 600,
+    padding: '3px 8px',
+    borderRadius: 6,
+    border: '1px solid',
+    marginLeft: 8,
     verticalAlign: 'middle',
   } as React.CSSProperties,
 
@@ -256,11 +269,11 @@ const s = {
   } as React.CSSProperties,
 
   tr: {
-    borderBottom: '0.5px solid rgba(0,0,0,0.06)',
+    borderBottom: '1px solid rgba(0,0,0,0.03)',
   } as React.CSSProperties,
 
   td: {
-    padding: '16px 24px',
+    padding: '20px 24px',
     color: '#111',
     verticalAlign: 'middle' as const,
   } as React.CSSProperties,
@@ -268,8 +281,8 @@ const s = {
   tdId: {
     fontFamily: 'ui-monospace, monospace',
     fontSize: 12,
-    color: '#bbb',
-    width: 56,
+    color: '#999',
+    width: 64,
   } as React.CSSProperties,
 
   tdName: {
@@ -285,13 +298,14 @@ const s = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap' as const,
-    color: '#888',
+    color: '#777',
   } as React.CSSProperties,
 
   tdDescMirrored: {
     color: '#854F0B',
     fontStyle: 'italic' as const,
   } as React.CSSProperties,
+
   tdEmpty: {
     color: '#ccc',
     fontStyle: 'italic' as const,
@@ -303,46 +317,51 @@ const s = {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap' as const,
     color: '#4338CA',
-    background: 'rgba(99, 102, 241, 0.03)',
-    fontWeight: 450,
+    background: 'rgba(99, 102, 241, 0.05)',
+    fontWeight: 500,
   } as React.CSSProperties,
 
   footer: {
-    padding: '12px 28px',
-    borderTop: '0.5px solid rgba(0,0,0,0.08)',
-    background: '#f9f9f8',
+    padding: '24px 40px',
+    borderTop: '1px solid rgba(255,255,255,0.1)',
+    background: 'rgba(255,255,255,0.85)',
+    backdropFilter: 'blur(30px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    position: 'sticky' as const,
+    bottom: 0,
+    zIndex: 50,
+    boxShadow: '0 -10px 40px rgba(0,0,0,0.03)',
   } as React.CSSProperties,
 
   footerText: {
-    fontSize: 13,
-    color: '#888',
+    fontSize: 14,
+    color: '#777',
   } as React.CSSProperties,
 
   pageControls: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   } as React.CSSProperties,
 
   pageBtn: {
     fontFamily: 'inherit',
-    fontSize: 12,
-    fontWeight: 500,
-    padding: '5px 12px',
-    borderRadius: 8,
-    border: '0.5px solid rgba(0,0,0,0.15)',
-    background: 'transparent',
+    fontSize: 13,
+    fontWeight: 600,
+    padding: '8px 18px',
+    borderRadius: 10,
+    border: '1px solid rgba(0,0,0,0.1)',
+    background: 'rgba(255,255,255,0.5)',
     color: '#444',
     cursor: 'pointer',
   } as React.CSSProperties,
 
   pageInfo: {
-    fontSize: 12,
-    color: '#999',
-    minWidth: 52,
+    fontSize: 13,
+    color: '#888',
+    minWidth: 64,
     textAlign: 'center' as const,
   } as React.CSSProperties,
 };
