@@ -48,12 +48,12 @@ const s = {
   } as React.CSSProperties,
 
   header: {
-    padding: '24px 28px',
+    padding: '32px 40px',
     borderBottom: '0.5px solid rgba(0,0,0,0.08)',
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 24,
+    gap: 32,
   } as React.CSSProperties,
 
   statusRow: {
@@ -80,16 +80,18 @@ const s = {
   },
 
   title: {
-    fontSize: 20,
-    fontWeight: 500,
+    fontSize: 32,
+    fontWeight: 300,
     color: '#111',
-    lineHeight: 1.3,
+    lineHeight: 1.2,
+    letterSpacing: '-0.02em',
   } as React.CSSProperties,
 
   subtitle: {
-    fontSize: 13,
-    color: '#888',
-    marginTop: 4,
+    fontSize: 15,
+    color: '#999',
+    marginTop: 8,
+    letterSpacing: '0.01em',
   } as React.CSSProperties,
 
   btnRow: {
@@ -133,18 +135,18 @@ const s = {
   } as React.CSSProperties,
 
   stat: {
-    padding: '18px 24px',
+    padding: '24px 36px',
   } as React.CSSProperties,
 
   statBorder: {
-    borderLeft: '0.5px solid rgba(0,0,0,0.08)',
+    borderLeft: '0.5px solid rgba(0,0,0,0.1)',
   } as React.CSSProperties,
 
   statVal: {
-    fontSize: 26,
-    fontWeight: 500,
+    fontSize: 36,
+    fontWeight: 300,
     color: '#111',
-    lineHeight: 1.2,
+    lineHeight: 1.1,
   } as React.CSSProperties,
 
   statValSm: {
@@ -258,7 +260,7 @@ const s = {
   } as React.CSSProperties,
 
   td: {
-    padding: '10px 16px',
+    padding: '16px 24px',
     color: '#111',
     verticalAlign: 'middle' as const,
   } as React.CSSProperties,
@@ -376,7 +378,7 @@ const NormalizationReview: React.FC<NormalizationReviewProps> = ({
         <div style={s.btnRow}>
           <button style={s.btnCancel} onClick={onCancel}>Cancel</button>
           <button style={s.btnPrimary} onClick={onContinue}>
-            Run detection
+            Move to chunking
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5-5 5M6 12h12" />
             </svg>
