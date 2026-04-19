@@ -194,7 +194,7 @@ function App() {
 
       {/* Main Container */}
       <div className="relative z-10 h-full w-full flex flex-col">
-        <main className={`flex-1 flex flex-col w-full overflow-y-auto ${(!hasFile || error || (isProcessing && !showNormalizationReview && pairs.length === 0)) ? 'justify-center items-center' : ''}`}>
+        <main className={`flex-1 flex flex-col w-full items-center overflow-y-auto ${(!hasFile || error || (isProcessing && !showNormalizationReview && !showChunkingReview && pairs.length === 0)) ? 'justify-center' : ''}`}>
           <div className={`w-full flex flex-col items-center ${(!hasFile || error || (isProcessing && !showNormalizationReview && !showChunkingReview && pairs.length === 0)) ? 'px-8 max-w-4xl' : `${(showNormalizationReview || showChunkingReview) ? 'max-w-none h-full' : 'px-8 max-w-[1240px] mx-auto pt-28 pb-20'}`}`}>
 
             {/* 1 & 2. Hero and Upload (Hidden during processing) */}
