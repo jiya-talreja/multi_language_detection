@@ -91,6 +91,6 @@ Wrapped in a **Zen-Light premium interface**, JN.ai combines high-performance 3D
 ---
 
 <div align="center">
-  <p>Built with ❤️ for global data integrity.</p>
+  <p>Built by Jiya and Noushad.</p>
   <p><b>JN.ai</b> — <i>Breaking language barriers in data deduplication.</i></p>
 </div>
