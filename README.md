@@ -73,11 +73,24 @@ Wrapped in a **Zen-Light premium interface**, JN.ai combines high-performance 3D
 1. Ensure you have Python 3.9+ installed.
 2. Install the required ML libraries:
    ```bash
-   pip install pandas numpy sentence-transformers scikit-learn
+   cd backend
+   pip install -r requirements.txt
    ```
-3. Run the clustering pipeline:
+3. (Optional) Ingest data from TMX files:
    ```bash
-   python backend/embeddings_used.py
+   python input/process_tmx_opus.py --files en-ja.tmx,ja --output data.csv
+   ```
+4. Run the clustering pipeline (takes a CSV with `name` and `description`):
+   ```bash
+   python run_pipeline.py --input data.csv --output results/
+   ```
+5. Evaluate model performance (Precision/Recall) on known duplicate groups:
+   ```bash
+   python evaluate.py --input data.csv
+   ```
+6. Run unit tests:
+   ```bash
+   pytest tests/
    ```
 
 ---
