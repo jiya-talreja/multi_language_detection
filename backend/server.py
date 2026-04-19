@@ -13,6 +13,7 @@ from normalize import load_file, standardize_dataframe
 from utils import clean_text
 from embed import encode_dataset
 from cluster import cluster_embeddings
+from text_chunking import chunk_dataframe
 
 app = FastAPI(title="JN.ai Backend")
 
@@ -59,10 +60,25 @@ async def normalize_file(
             "data": data,
             "total_rows": len(std_df)
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
     finally:
         pathlib.Path(tmp_path).unlink(missing_ok=True)
+
+@app.post("/chunk")
+async def chunk_data(data: list[dict]):
+    """
+    Accepts normalized records and returns them exploded into chunks.
+    """
+    try:
+        df = pd.DataFrame(data)
+        chunked_df = chunk_dataframe(df)
+        return {
+            "status": "success",
+            "data": chunked_df.to_dict(orient="records"),
+            "total_rows": len(chunked_df),
+            "original_rows": len(df)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/detect")
 async def detect_duplicates(
@@ -103,17 +119,21 @@ async def detect_duplicates(
             raise HTTPException(status_code=400, detail="No usable text found in the dataset.")
             
         working_df = df[valid_mask].copy().reset_index(drop=True)
+        
+        # 3. Apply chunking
+        working_df = chunk_dataframe(working_df, max_chars=800, overlap=100)
+        
         texts = working_df["text"].tolist()
-        # 3. Embed
+        # 4. Embed
         print(f"Embedding {len(texts)} texts...")
         vectors = encode_dataset(texts, model_name=GLOBAL_MODEL_NAME)
 
-        # 4. Cluster
+        # 5. Cluster
         print("Clustering...")
         labels = cluster_embeddings(vectors, eps=eps)
         working_df["cluster_id"] = labels
 
-        # 5. Build Pairs for the UI
+        # 6. Build Pairs for the UI
         pairs = []
         pair_id_counter = 1
         
@@ -133,26 +153,32 @@ async def detect_duplicates(
                 recA = working_df.iloc[idxA]
                 recB = working_df.iloc[idxB]
                 
+                # If they belong to the same original record, don't pair them
+                if str(recA.get("parent_id", recA["id"])) == str(recB.get("parent_id", recB["id"])):
+                    continue
+                
                 pairs.append({
                     "id": f"pair-{pair_id_counter}",
                     "similarity": round(float(sim), 3),
                     "recordA": {
-                        "id": str(recA["id"]),
+                        "id": str(recA.get("parent_id", recA["id"])),
                         "name": str(recA["name"]),
                         "email": str(recA["email"]),
                         "phone": str(recA["phone"]),
                         "text": str(recA["text"]),
                         "language": str(recA["language"]) if recA["language"] else "Unknown",
-                        "languageCode": str(recA["language"])[:2].lower() if recA["language"] else "en"
+                        "languageCode": str(recA["language"])[:2].lower() if recA["language"] else "en",
+                        "isChunk": bool(recA.get("is_chunked", False))
                     },
                     "recordB": {
-                        "id": str(recB["id"]),
+                        "id": str(recB.get("parent_id", recB["id"])),
                         "name": str(recB["name"]),
                         "email": str(recB["email"]),
                         "phone": str(recB["phone"]),
                         "text": str(recB["text"]),
                         "language": str(recB["language"]) if recB["language"] else "Unknown",
-                        "languageCode": str(recB["language"])[:2].lower() if recB["language"] else "en"
+                        "languageCode": str(recB["language"])[:2].lower() if recB["language"] else "en",
+                        "isChunk": bool(recB.get("is_chunked", False))
                     }
                 })
                 pair_id_counter += 1
