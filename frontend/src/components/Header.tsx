@@ -11,11 +11,6 @@ const Header: React.FC = () => {
               J
             </div>
           </div>
-          <div className="flex flex-col leading-tight">
-            <span className="text-xl font-semibold tracking-tight text-[#1a1a2e]">
-              JN<span className="text-violet-600">.ai</span>
-            </span>
-          </div>
         </div>
       </div>
     </header>
