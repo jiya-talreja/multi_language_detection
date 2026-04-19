@@ -20,22 +20,6 @@ const Header: React.FC = () => {
             </span>
           </div>
         </div>
-
-        <nav className="hidden md:flex items-center gap-8">
-          {['Features', 'Languages', 'Pricing', 'API'].map((item) => (
-            <a 
-              key={item} 
-              href={`#${item.toLowerCase()}`} 
-              className="text-sm font-medium text-[#1a1a2e]/70 hover:text-violet-600 transition-colors"
-            >
-              {item}
-            </a>
-          ))}
-        </nav>
-
-        <button className="px-5 py-2.5 bg-[#1a1a2e] text-white rounded-xl text-sm font-medium hover:bg-[#2a2a4e] hover:shadow-xl hover:shadow-violet-500/10 transition-all active:scale-95">
-          Launch App
-        </button>
       </div>
     </header>
   );

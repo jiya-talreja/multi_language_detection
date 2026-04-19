@@ -108,24 +108,12 @@ function App() {
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               className="text-center mb-16 pt-32"
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-600/10 border border-violet-600/20 text-violet-600 text-xs font-semibold mb-8">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
-                </span>
-                Powered by Multilingual Transformers
-              </div>
-              
               <h1 className="text-5xl md:text-8xl font-extralight tracking-tight mb-6 leading-[1.05]">
                 Detect Duplicates<br />
                 <span className="font-medium bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-500 bg-clip-text text-transparent">
                   Across Many Languages
                 </span>
               </h1>
-              
-              <p className="text-lg text-[#1a1a2e]/60 max-w-xl mx-auto font-light leading-relaxed">
-                JN.ai uses semantic analysis to find record duplicates in Arabic, Russian, Japanese and 40+ other languages instantly.
-              </p>
             </motion.div>
 
             {/* 2. Upload Section */}
