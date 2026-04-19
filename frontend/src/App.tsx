@@ -84,6 +84,8 @@ function App() {
   const [showChunkingReview, setShowChunkingReview] = useState(false);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isEmbeddingComplete, setIsEmbeddingComplete] = useState(false);
+  const [storedPairs, setStoredPairs] = useState<DuplicatePair[]>([]);
 
   const handleFileAccepted = useCallback(async (file: File) => {
     setHasFile(true);
@@ -151,6 +153,8 @@ function App() {
     
     setIsProcessing(true);
     setShowChunkingReview(false);
+    setIsEmbeddingComplete(false);
+    setStoredPairs([]);
 
     const formData = new FormData();
     formData.append("file", currentFile);
@@ -168,19 +172,29 @@ function App() {
       }
 
       const data = await response.json();
+      setStoredPairs(data.pairs);
       
-      // Animate pairs in
-      data.pairs.forEach((pair: DuplicatePair, i: number) => {
-        setTimeout(() => {
-          setPairs(prev => [...prev, pair]);
-        }, i * 150);
-      });
+      // Simulate that embedding is done after the backend returns
+      // (In a real app, you might have real-time progress from backend)
+      setTimeout(() => {
+        setIsEmbeddingComplete(true);
+      }, 500);
+      
     } catch (error) {
       console.error("Error processing file:", error);
       setError((error as Error).message);
-    } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleFinalDetection = () => {
+    setIsProcessing(false);
+    // Animate pairs in
+    storedPairs.forEach((pair: DuplicatePair, i: number) => {
+      setTimeout(() => {
+        setPairs(prev => [...prev, pair]);
+      }, i * 150);
+    });
   };
 
   const handleResolve = useCallback((id: string, _action: 'keep' | 'remove') => {
@@ -193,9 +207,9 @@ function App() {
       <Background />
 
       {/* Main Container */}
-      <div className="relative z-10 h-full w-full flex flex-col">
-        <main className={`flex-1 flex flex-col w-full items-center overflow-y-auto ${(!hasFile || error || (isProcessing && !showNormalizationReview && !showChunkingReview && pairs.length === 0)) ? 'justify-center' : ''}`}>
-          <div className={`w-full flex flex-col items-center ${(!hasFile || error || (isProcessing && !showNormalizationReview && !showChunkingReview && pairs.length === 0)) ? 'px-8 max-w-4xl' : `${(showNormalizationReview || showChunkingReview) ? 'max-w-none h-full' : 'px-8 max-w-[1240px] mx-auto pt-28 pb-20'}`}`}>
+      <div className="relative z-10 h-full w-full overflow-y-auto">
+        <main className="min-h-full w-full flex flex-col items-center justify-center py-12">
+          <div className={`w-full flex flex-col items-center ${(!hasFile || error || (isProcessing && !showNormalizationReview && !showChunkingReview && pairs.length === 0)) ? 'px-8 max-w-4xl' : `${(showNormalizationReview || showChunkingReview) ? 'max-w-none w-full h-full' : 'px-8 max-w-[1240px] mx-auto pt-28 pb-20'}`}`}>
 
             {/* 1 & 2. Hero and Upload (Hidden during processing) */}
             <AnimatePresence mode="wait">
@@ -242,47 +256,52 @@ function App() {
 
             {/* Loading State for Embedding */}
             {hasFile && isProcessing && !showChunkingReview && pairs.length === 0 && chunkingData.length > 0 && (
-                <EmbeddingProgress totalChunks={chunkingData.length} />
+                <EmbeddingProgress 
+                  totalChunks={chunkingData.length} 
+                  isComplete={isEmbeddingComplete}
+                  onDetectionStart={handleFinalDetection}
+                />
             )}
 
             {/* Error State */}
             {error && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="w-full flex-1 flex flex-col items-center justify-center"
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full flex flex-col items-center justify-center gap-12"
               >
-                <div className="py-16 px-10 bg-white/80 backdrop-blur-3xl border-2 border-white/60 rounded-[4rem] text-center max-w-lg shadow-[0_50px_100px_rgba(0,0,0,0.08)] relative overflow-hidden flex flex-col items-center gap-6">
-                  <div className="absolute inset-0 bg-red-500/[0.01] pointer-events-none" />
-                  
-                  {/* Icon Section */}
-                  <motion.div 
-                    animate={{ y: [0, -6, 0] }} 
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="text-red-500 text-5xl drop-shadow-xl"
+                {/* Icon Section */}
+                <motion.div 
+                  animate={{ y: [0, -10, 0] }} 
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-32 h-32 rounded-full bg-red-500/10 backdrop-blur-md border border-red-500/20 flex items-center justify-center shadow-[0_0_60px_rgba(239,68,68,0.15)]"
+                >
+                  <span className="text-6xl drop-shadow-2xl">⚠️</span>
+                </motion.div>
+                
+                {/* Text Section */}
+                <div className="flex flex-col items-center gap-10 max-w-4xl text-center">
+                  <h3 className="text-6xl font-extralight text-slate-900 tracking-tight leading-tight">Processing Error</h3>
+                  <div className="px-20 py-7 bg-red-500/5 backdrop-blur-md rounded-full border border-red-500/10 shadow-[0_15px_35px_rgba(239,68,68,0.06)] min-w-[600px] flex justify-center items-center">
+                    <p className="text-red-600 text-xl font-medium tracking-tight">
+                      {error}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Action Section */}
+                <div className="pt-4">
+                  <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => { setHasFile(false); setError(null); }}
+                    className="px-20 py-5 bg-slate-900 text-white rounded-full text-xl font-bold flex items-center justify-center gap-5 hover:bg-black transition-all duration-300 shadow-[0_25px_50px_rgba(0,0,0,0.25)] group border-2 border-white/20 tracking-tight min-w-[320px]"
                   >
-                    ⚠️
-                  </motion.div>
-                  
-                  {/* Text Section */}
-                  <div className="flex flex-col gap-3 px-2 w-full">
-                    <h3 className="text-[#1a1a2e] text-3xl font-light tracking-tight">Processing Error</h3>
-                    <div className="px-8 py-4 bg-red-50/40 rounded-[2rem] border border-red-100/20 w-full max-w-md mx-auto">
-                      <p className="text-red-600/90 text-sm md:text-base leading-relaxed">
-                        {error}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Action Section */}
-                  <div className="pt-2">
-                    <button 
-                      onClick={() => { setHasFile(false); setError(null); }}
-                      className="group relative px-24 py-3.5 bg-[#1a1a2e] text-white rounded-full border-2 border-white/10 hover:border-white/30 hover:bg-black transition-all duration-300 text-base font-medium shadow-[0_15px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1 active:scale-95"
-                    >
-                      <span className="relative z-10">Try Again</span>
-                    </button>
-                  </div>
+                    <span className="relative z-10">Try Again</span>
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="group-hover:rotate-180 transition-transform duration-500">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </motion.button>
                 </div>
               </motion.div>
             )}
@@ -335,13 +354,35 @@ function App() {
                 <motion.div
                   initial={{ opacity: 0, y: 40 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="w-full pt-32 pb-12 text-center"
+                  className="w-full flex flex-col items-center justify-center gap-12 text-center"
                 >
-                   <h2 className="text-3xl font-light mb-4">No Duplicates Found</h2>
-                   <p className="text-gray-500 mb-8">Your dataset looks completely clean!</p>
-                   <button onClick={() => setHasFile(false)} className="px-6 py-2 bg-violet-100 text-violet-600 rounded-full hover:bg-violet-200 transition-colors">
+                   {/* Success Icon */}
+                   <motion.div 
+                     animate={{ y: [0, -10, 0] }} 
+                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                     className="w-32 h-32 rounded-full bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 flex items-center justify-center shadow-[0_0_60px_rgba(16,185,129,0.15)]"
+                   >
+                     <svg width="60" height="60" fill="none" viewBox="0 0 24 24" stroke="#10b981">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                     </svg>
+                   </motion.div>
+
+                   <div className="space-y-4">
+                     <h2 className="text-6xl font-extralight text-slate-900 tracking-tight">No Duplicates Found</h2>
+                     <p className="text-slate-500 text-xl font-light">Your dataset looks completely clean!</p>
+                   </div>
+
+                   <motion.button 
+                     whileHover={{ scale: 1.05 }}
+                     whileTap={{ scale: 0.95 }}
+                     onClick={() => setHasFile(false)} 
+                     className="px-20 py-5 bg-slate-900 text-white rounded-full text-xl font-bold flex items-center justify-center gap-5 hover:bg-black transition-all duration-300 shadow-[0_25px_50px_rgba(0,0,0,0.25)] group border-2 border-white/20 tracking-tight min-w-[320px]"
+                   >
                      Upload Another File
-                   </button>
+                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="group-hover:translate-x-2 transition-transform duration-300">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                     </svg>
+                   </motion.button>
                 </motion.div>
             )}
           </div>
