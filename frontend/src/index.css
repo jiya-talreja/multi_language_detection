@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600&family=DM+Sans:wght@200;300;400;500&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg-base: #f5f3f0;
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 8px 32px rgba(150, 140, 200, 0.12), 0 2px 8px rgba(150, 140, 200, 0.08);
+  --glass-shadow-lg: 0 20px 60px rgba(150, 140, 200, 0.18), 0 8px 24px rgba(150, 140, 200, 0.12), 0 2px 6px rgba(255,255,255,0.9) inset;
+  --glow-blue: rgba(147, 197, 253, 0.6);
+  --glow-purple: rgba(196, 181, 253, 0.6);
+  --glow-pink: rgba(251, 207, 232, 0.6);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+  font-family: 'Inter', 'DM Sans', sans-serif;
+  background-color: transparent;
+  overflow-x: hidden;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(180,170,220,0.4); border-radius: 99px; }
+
+/* ─── Glass Utilities ─── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-heavy {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: var(--glass-shadow-lg);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 4px 24px rgba(150, 140, 200, 0.10),
+    0 1.5px 4px rgba(150, 140, 200, 0.08),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+/* ─── Floating Orbs / 3D Shapes ─── */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  will-change: transform;
+  z-index: 0;
+}
+
+/* ─── Drop Zone ─── */
+.drop-slot {
+  border: 2px dashed rgba(180, 165, 230, 0.45);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow:
+    inset 0 2px 12px rgba(200, 190, 240, 0.08),
+    0 2px 8px rgba(200, 190, 240, 0.06);
+}
+
+.drop-slot.dragging {
+  border-color: rgba(167, 139, 250, 0.75);
+  box-shadow:
+    inset 0 6px 24px rgba(167, 139, 250, 0.15),
+    0 0 40px rgba(167, 139, 250, 0.2),
+    0 0 80px rgba(147, 197, 253, 0.12);
+  transform: scale(0.985) translateY(2px);
+}
+
+/* ─── Status Pill Glow ─── */
+.status-glow {
+  box-shadow:
+    0 0 12px rgba(134, 239, 172, 0.5),
+    0 0 28px rgba(134, 239, 172, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+/* ─── Connection string bubble ─── */
+.similarity-bubble {
+  background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(240,235,255,0.85) 100%);
+  box-shadow:
+    0 4px 16px rgba(167, 139, 250, 0.25),
+    0 1px 4px rgba(167, 139, 250, 0.15),
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    inset 0 -1px 0 rgba(167, 139, 250, 0.1);
+}
+
+/* ─── Card tilt perspective ─── */
+.perspective-wrapper {
+  perspective: 800px;
+}
+
+/* ─── Lang badge pastel ─── */
+.lang-arabic  { background: rgba(186, 230, 253, 0.7); color: #0c4a6e; }
+.lang-russian { background: rgba(221, 214, 254, 0.7); color: #3730a3; }
+.lang-french  { background: rgba(254, 215, 170, 0.7); color: #78350f; }
+.lang-spanish { background: rgba(187, 247, 208, 0.7); color: #14532d; }
+.lang-german  { background: rgba(254, 202, 202, 0.7); color: #7f1d1d; }
+.lang-chinese { background: rgba(253, 224, 254, 0.7); color: #701a75; }
+.lang-japanese { background: rgba(254, 240, 138, 0.7); color: #713f12; }
+.lang-english { background: rgba(209, 250, 229, 0.7); color: #064e3b; }
+.lang-default { background: rgba(226, 232, 240, 0.7); color: #1e293b; }
+
+/* ─── Utility animations ─── */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-18px) rotate(2deg); }
+  66% { transform: translateY(-8px) rotate(-1.5deg); }
+}
+@keyframes float-med {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-22px) rotate(3deg); }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-float-slow { animation: float-slow 9s ease-in-out infinite; }
+.animate-float-med  { animation: float-med  7s ease-in-out infinite; }
+.animate-spin-slow  { animation: spin-slow 20s linear infinite; }
+
+/* connection line */
+.connection-line {
+  width: 2px;
+  background: linear-gradient(to bottom, transparent, rgba(167,139,250,0.4), transparent);
+}
