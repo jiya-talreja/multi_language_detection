@@ -4,6 +4,7 @@ import pandas as pd
 from utils import clean_text
 from embed import encode_dataset
 from cluster import cluster_embeddings
+from text_chunking import chunk_dataframe
 from normalize import load_file, standardize_dataframe
 
 def main():
@@ -34,6 +35,10 @@ def main():
     if not valid_mask.all():
         print(f"Dropping {len(df) - valid_mask.sum()} records with empty text after normalization.")
         df = df[valid_mask].copy()
+
+    # Apply Chunking
+    print("Applying text chunking to avoid context window truncation...")
+    df = chunk_dataframe(df, max_chars=800, overlap=100)
 
     texts = df["text"].tolist()
 
