@@ -23,7 +23,7 @@ const PAGE_SIZE = 12;
 const s = {
   root: {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    background: '#fff',
+    background: 'transparent',
     width: '100%',
     height: '100%',
     display: 'flex',
@@ -31,51 +31,52 @@ const s = {
   } as React.CSSProperties,
 
   header: {
-    padding: '32px 40px',
-    borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+    padding: '48px 40px',
+    borderBottom: '1px solid rgba(255,255,255,0.1)',
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 32,
-    background: 'linear-gradient(to right, #f8fafc, #fff)',
+    background: 'rgba(255,255,255,0.7)',
+    backdropFilter: 'blur(20px)',
   } as React.CSSProperties,
 
   statusRow: {
     display: 'flex',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 6,
+    marginBottom: 8,
   } as React.CSSProperties,
 
   statusDot: {
-    width: 7,
-    height: 7,
+    width: 8,
+    height: 8,
     borderRadius: '50%',
     background: '#6366F1',
     flexShrink: 0,
-    boxShadow: '0 0 10px rgba(99, 102, 241, 0.4)',
+    boxShadow: '0 0 12px rgba(99, 102, 241, 0.4)',
   } as React.CSSProperties,
 
   statusLabel: {
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 700,
     color: '#4F46E5',
-    letterSpacing: '0.08em',
+    letterSpacing: '0.1em',
     textTransform: 'uppercase' as const,
   },
 
   title: {
-    fontSize: 32,
-    fontWeight: 300,
+    fontSize: 48,
+    fontWeight: 200,
     color: '#111',
-    lineHeight: 1.2,
-    letterSpacing: '-0.02em',
+    lineHeight: 1.1,
+    letterSpacing: '-0.03em',
   } as React.CSSProperties,
 
   subtitle: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#64748b',
-    marginTop: 8,
+    marginTop: 12,
     letterSpacing: '0.01em',
   } as React.CSSProperties,
 
@@ -83,17 +84,17 @@ const s = {
     display: 'flex',
     gap: 12,
     flexShrink: 0,
-    paddingTop: 2,
+    paddingTop: 8,
   } as React.CSSProperties,
 
   btnBack: {
     fontFamily: 'inherit',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 500,
-    padding: '9px 20px',
-    borderRadius: 10,
-    border: '1.5px solid #e2e8f0',
-    background: '#fff',
+    padding: '10px 24px',
+    borderRadius: 12,
+    border: '1px solid rgba(0,0,0,0.1)',
+    background: 'rgba(255,255,255,0.5)',
     color: '#475569',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
@@ -101,10 +102,10 @@ const s = {
 
   btnPrimary: {
     fontFamily: 'inherit',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 600,
-    padding: '9px 24px',
-    borderRadius: 10,
+    padding: '10px 28px',
+    borderRadius: 12,
     border: 'none',
     background: '#111',
     color: '#fff',
@@ -112,45 +113,47 @@ const s = {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    boxShadow: '0 10px 20px rgba(0,0,0,0.15)',
   } as React.CSSProperties,
 
   stats: {
     display: 'grid',
     gridTemplateColumns: 'repeat(4, 1fr)',
-    background: '#f8fafc',
-    borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+    background: 'rgba(255,255,255,0.4)',
+    backdropFilter: 'blur(10px)',
+    borderBottom: '1px solid rgba(255,255,255,0.1)',
   } as React.CSSProperties,
 
   stat: {
-    padding: '24px 40px',
+    padding: '32px 40px',
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: 4,
+    gap: 6,
   } as React.CSSProperties,
 
   statBorder: {
-    borderLeft: '0.5px solid #e2e8f0',
+    borderLeft: '1px solid rgba(0,0,0,0.05)',
   } as React.CSSProperties,
 
   statVal: {
-    fontSize: 32,
-    fontWeight: 300,
+    fontSize: 40,
+    fontWeight: 200,
     color: '#0f172a',
     lineHeight: 1,
   } as React.CSSProperties,
 
   statLabel: {
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 700,
     color: '#94a3b8',
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.1em',
+    letterSpacing: '0.12em',
   },
 
   tableWrap: {
     overflowY: 'auto' as const,
     flex: 1,
+    background: 'rgba(255,255,255,0.2)',
   },
 
   table: {
@@ -159,55 +162,56 @@ const s = {
   } as React.CSSProperties,
 
   th: {
-    padding: '14px 24px',
+    padding: '16px 24px',
     textAlign: 'left' as const,
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 700,
     color: '#64748b',
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.1em',
-    background: '#fff',
-    borderBottom: '1px solid #f1f5f9',
+    letterSpacing: '0.12em',
+    background: 'rgba(255,255,255,0.6)',
+    backdropFilter: 'blur(10px)',
+    borderBottom: '1px solid rgba(0,0,0,0.05)',
     position: 'sticky' as const,
     top: 0,
     zIndex: 10,
   } as React.CSSProperties,
 
   tr: {
-    borderBottom: '1px solid #f1f5f9',
+    borderBottom: '1px solid rgba(0,0,0,0.03)',
     transition: 'background 0.2s ease',
   } as React.CSSProperties,
 
   td: {
-    padding: '16px 24px',
-    fontSize: 13,
+    padding: '20px 24px',
+    fontSize: 14,
     color: '#334155',
   } as React.CSSProperties,
 
   parentBadge: {
     fontSize: 11,
-    fontWeight: 500,
+    fontWeight: 600,
     color: '#94a3b8',
-    background: '#f1f5f9',
-    padding: '2px 6px',
-    borderRadius: 4,
+    background: 'rgba(241, 245, 249, 0.5)',
+    padding: '3px 8px',
+    borderRadius: 6,
     fontFamily: 'ui-monospace, monospace',
   } as React.CSSProperties,
 
   chunkBadge: {
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 700,
     color: '#6366f1',
-    background: '#eef2ff',
-    padding: '2px 8px',
-    borderRadius: 4,
+    background: 'rgba(238, 242, 255, 0.5)',
+    padding: '3px 10px',
+    borderRadius: 6,
     marginLeft: 8,
   } as React.CSSProperties,
 
   textPreview: {
     maxWidth: 600,
     color: '#1e293b',
-    lineHeight: 1.5,
+    lineHeight: 1.6,
     display: '-webkit-box',
     WebkitLineClamp: 2,
     WebkitBoxOrient: 'vertical' as const,
@@ -215,21 +219,26 @@ const s = {
   } as React.CSSProperties,
 
   footer: {
-    padding: '16px 40px',
-    background: '#fff',
-    borderTop: '1px solid #f1f5f9',
+    padding: '24px 40px',
+    background: 'rgba(255,255,255,0.85)',
+    backdropFilter: 'blur(30px)',
+    borderTop: '1px solid rgba(255,255,255,0.1)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    position: 'sticky' as const,
+    bottom: 0,
+    zIndex: 50,
+    boxShadow: '0 -10px 40px rgba(0,0,0,0.03)',
   } as React.CSSProperties,
 
   pageBtn: {
-    padding: '6px 16px',
-    borderRadius: 8,
-    border: '1px solid #e2e8f0',
-    background: '#fff',
-    fontSize: 12,
-    fontWeight: 500,
+    padding: '8px 20px',
+    borderRadius: 10,
+    border: '1px solid rgba(0,0,0,0.1)',
+    background: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
+    fontWeight: 600,
     color: '#475569',
     cursor: 'pointer',
   } as React.CSSProperties,
@@ -263,7 +272,7 @@ const ChunkingReview: React.FC<ChunkingReviewProps> = ({ data, originalCount, on
         <div style={s.btnRow}>
           <button style={s.btnBack} onClick={onBack}>Back to Norm</button>
           <button style={s.btnPrimary} onClick={onContinue}>
-            Run embedding & detection
+            Move to embedding
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5-5 5M6 12h12" />
             </svg>
