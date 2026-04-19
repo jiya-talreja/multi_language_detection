@@ -9,7 +9,7 @@ interface EmbeddingProgressProps {
 
 const EmbeddingProgress: React.FC<EmbeddingProgressProps> = ({ totalChunks, isComplete, onDetectionStart }) => {
   const [progress, setProgress] = useState(0);
-  const batchSize = 100;
+  const batchSize = 32; // Matches backend batch size precisely
   const totalBatches = Math.ceil(totalChunks / batchSize);
   const currentBatch = Math.min(totalBatches, Math.floor((progress / 100) * totalBatches) + 1);
 
@@ -19,14 +19,14 @@ const EmbeddingProgress: React.FC<EmbeddingProgressProps> = ({ totalChunks, isCo
        return;
     }
     // Simulate progress while waiting for the real backend response
-    // The backend takes some time to embed, so we fake a log-style progress
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 98) return prev;
-        const step = Math.random() * 2;
+        // Adjusted to match the ~80s processing time seen in your terminal
+        const step = Math.random() * 1.2;
         return prev + step;
       });
-    }, 400);
+    }, 600);
 
     return () => clearInterval(interval);
   }, [isComplete]);
@@ -85,7 +85,14 @@ const EmbeddingProgress: React.FC<EmbeddingProgressProps> = ({ totalChunks, isCo
         {/* Progress — Floating */}
         <div className="w-full max-w-xl space-y-5">
           <div className="flex justify-between text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">
-            <span>{isComplete ? 'Ready for Analysis' : `Processing Batch ${currentBatch} / ${totalBatches}`}</span>
+            <span>
+              {isComplete 
+                ? 'Ready for Analysis' 
+                : progress >= 95 
+                  ? 'Finalizing Similarity Clusters...' 
+                  : `Processing Batch ${currentBatch} / ${totalBatches}`
+              }
+            </span>
             <span>{Math.floor(progress)}%</span>
           </div>
           <div className="w-full bg-slate-900/5 h-2.5 rounded-full overflow-hidden shadow-inner backdrop-blur-sm">
