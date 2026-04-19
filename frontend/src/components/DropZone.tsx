@@ -53,7 +53,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFileAccepted }) => {
       <motion.label
         htmlFor="file-input"
         className={`drop-slot glass-heavy rounded-3xl flex flex-col items-center justify-center cursor-pointer relative overflow-hidden w-full ${isDragging ? 'dragging' : ''}`}
-        style={{ minHeight: 280 }}
+        style={{ minHeight: 420 }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -69,24 +69,24 @@ const DropZone: React.FC<DropZoneProps> = ({ onFileAccepted }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="flex flex-col items-center gap-6 px-10 text-center"
+              className="flex flex-col items-center gap-10 px-12 text-center"
             >
-              <div className="w-16 h-16 rounded-2xl bg-violet-500/5 border border-violet-500/10 flex items-center justify-center shadow-inner">
-                <Upload size={24} className="text-violet-500" strokeWidth={1.5} />
+              <div className="w-20 h-20 rounded-3xl bg-violet-500/5 border border-violet-500/10 flex items-center justify-center shadow-inner">
+                <Upload size={32} className="text-violet-500" strokeWidth={1} />
               </div>
 
               <div>
-                <p className="text-lg font-light text-gray-700">
-                  {isDragging ? 'Release to upload' : <><span className="font-medium text-violet-600">Drop your file here</span> or click to browse</>}
+                <p className="text-2xl font-light text-gray-700 tracking-tight">
+                  {isDragging ? 'Release to upload' : <><span className="font-medium text-violet-600">Drop your file here</span><br /><span className="text-lg opacity-60">or click to browse your system</span></>}
                 </p>
-                <p className="text-xs text-gray-400 mt-2 tracking-wide font-light">
+                <p className="text-sm text-gray-400 mt-4 tracking-widest font-light uppercase">
                   XLSX, CSV, JSON, TSV • Up to 50MB
                 </p>
               </div>
 
-              <div className="flex gap-2 flex-wrap justify-center">
+              <div className="flex gap-3 flex-wrap justify-center mt-4">
                 {['CSV', 'TSV', 'XLSX', 'JSON', 'XML'].map(fmt => (
-                  <span key={fmt} className="text-[0.6rem] font-medium tracking-wider px-2.5 py-1 rounded-md bg-white/50 border border-white/80 shadow-sm text-gray-500">
+                  <span key={fmt} className="text-[0.7rem] font-semibold tracking-widest px-4 py-1.5 rounded-lg bg-white/50 border border-white/80 shadow-sm text-gray-500 uppercase">
                     {fmt}
                   </span>
                 ))}
