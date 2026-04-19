@@ -106,11 +106,11 @@ function App() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="text-center mb-16 pt-32"
+              className="text-center mb-16 pt-16"
             >
-              <h1 className="text-5xl md:text-8xl font-extralight tracking-tight mb-6 leading-[1.05]">
-                Detect Duplicates<br />
-                <span className="font-medium bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-500 bg-clip-text text-transparent">
+              <h1 className="text-3xl md:text-5xl font-extralight tracking-tight mb-7 leading-tight">
+                <span className="block">Detect Duplicates</span>
+                <span className="block font-medium bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-500 bg-clip-text text-transparent">
                   Across Many Languages
                 </span>
               </h1>
