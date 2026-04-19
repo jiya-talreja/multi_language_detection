@@ -134,8 +134,16 @@ async def detect_duplicates(
         working_df["cluster_id"] = labels
 
         # 6. Build Pairs for the UI
+        print("Building pairs and calculating similarities...")
         pairs = []
         pair_id_counter = 1
+        
+        # Optimize by normalizing all vectors once
+        import numpy as np
+        # Avoid divide by zero
+        norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+        norms[norms == 0] = 1
+        vectors_norm = vectors / norms
         
         # Iterate over each cluster that is not noise (-1)
         for cluster_id in sorted(working_df["cluster_id"].unique()):
@@ -144,22 +152,33 @@ async def detect_duplicates(
                 
             cluster_indices = working_df[working_df["cluster_id"] == cluster_id].index.tolist()
             
+            # Skip massive clusters to prevent memory explosion
+            if len(cluster_indices) > 500:
+                print(f"Warning: Cluster {cluster_id} has {len(cluster_indices)} items. Taking a sample to prevent crash.")
+                cluster_indices = cluster_indices[:500]
+            
+            # Vectorized similarity matrix for this cluster
+            cluster_vecs = vectors_norm[cluster_indices]
+            sim_matrix = np.dot(cluster_vecs, cluster_vecs.T)
+            
             # Generate all pairs within this cluster
-            for idxA, idxB in combinations(cluster_indices, 2):
-                vecA = vectors[idxA].reshape(1, -1)
-                vecB = vectors[idxB].reshape(1, -1)
-                sim = cosine_similarity(vecA, vecB)[0][0]
-                
-                recA = working_df.iloc[idxA]
-                recB = working_df.iloc[idxB]
-                
-                # If they belong to the same original record, don't pair them
-                if str(recA.get("parent_id", recA["id"])) == str(recB.get("parent_id", recB["id"])):
-                    continue
-                
-                pairs.append({
-                    "id": f"pair-{pair_id_counter}",
-                    "similarity": round(float(sim), 3),
+            for i in range(len(cluster_indices)):
+                for j in range(i + 1, len(cluster_indices)):
+                    idxA = cluster_indices[i]
+                    idxB = cluster_indices[j]
+                    
+                    recA = working_df.iloc[idxA]
+                    recB = working_df.iloc[idxB]
+                    
+                    # If they belong to the same original record, don't pair them
+                    if str(recA.get("parent_id", recA["id"])) == str(recB.get("parent_id", recB["id"])):
+                        continue
+                        
+                    sim = sim_matrix[i, j]
+                    
+                    pairs.append({
+                        "id": f"pair-{pair_id_counter}",
+                        "similarity": round(float(sim), 3),
                     "recordA": {
                         "id": str(recA.get("parent_id", recA["id"])),
                         "name": str(recA["name"]),
@@ -185,7 +204,14 @@ async def detect_duplicates(
 
         # Sort pairs by similarity descending
         pairs.sort(key=lambda x: x["similarity"], reverse=True)
+        
+        # Limit the number of pairs returned to the frontend to prevent browser crashing
+        MAX_PAIRS = 500
+        if len(pairs) > MAX_PAIRS:
+            print(f"Limiting pairs from {len(pairs)} to {MAX_PAIRS} to prevent frontend crash.")
+            pairs = pairs[:MAX_PAIRS]
 
+        print(f"Returning {len(pairs)} pairs to the UI.")
         return {"status": "success", "pairs": pairs, "total_records_processed": len(working_df)}
 
     except Exception as e:
