@@ -5,9 +5,10 @@ import shutil
 import tempfile
 import pathlib
 import pandas as pd
+import numpy as np
+import faiss
 from typing import Optional
-from itertools import combinations
-from sklearn.metrics.pairwise import cosine_similarity
+from pydantic import BaseModel
 
 from normalize import load_file, standardize_dataframe
 from utils import clean_text
@@ -15,8 +16,13 @@ from embed import encode_dataset
 from cluster import cluster_embeddings
 from text_chunking import chunk_dataframe
 
-app = FastAPI(title="JN.ai Backend")
+FAISS_INDEX = None
+FAISS_GROUP_IDS = None
 
+class SearchQuery(BaseModel):
+    query: str
+
+app = FastAPI(title="JN.ai Backend")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # Allow React frontend
@@ -228,6 +234,29 @@ async def detect_duplicates(
         clusters.sort(key=lambda x: x["avgSimilarity"], reverse=True)
         
         print(f"Returning {len(clusters)} clusters to the UI.")
+        # Build FAISS index for real-time search
+        global FAISS_INDEX, FAISS_GROUP_IDS
+        try:
+            print("Building FAISS index for real-time search...")
+            group_vectors = []
+            faiss_group_ids = []
+            
+            # Map clusters to vectors using their anchors or centroids
+            # For simplicity and speed, we use the anchor text vector
+            anchor_texts = [c["anchor"]["text"] for c in clusters]
+            if anchor_texts:
+                anchor_embs = encode_dataset(anchor_texts, model_name=GLOBAL_MODEL_NAME)
+                anchor_embs = anchor_embs.astype("float32")
+                faiss.normalize_L2(anchor_embs)
+                
+                dim = anchor_embs.shape[1]
+                FAISS_INDEX = faiss.IndexFlatIP(dim)
+                FAISS_INDEX.add(anchor_embs)
+                FAISS_GROUP_IDS = [c["id"] for c in clusters]
+                print(f"FAISS index built with {len(FAISS_GROUP_IDS)} clusters.")
+        except Exception as faiss_err:
+            print(f"Failed to build FAISS index: {str(faiss_err)}")
+
         return {"status": "success", "clusters": clusters, "total_records_processed": len(working_df)}
 
     except Exception as e:
@@ -236,6 +265,40 @@ async def detect_duplicates(
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         pathlib.Path(tmp_path).unlink(missing_ok=True)
+
+
+@app.post("/search")
+async def search_duplicates(request: SearchQuery):
+    global FAISS_INDEX, FAISS_GROUP_IDS
+    if FAISS_INDEX is None or not FAISS_GROUP_IDS:
+        raise HTTPException(status_code=400, detail="FAISS index not built yet. Please process a file first.")
+        
+    text = request.query.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Query text is empty.")
+        
+    try:
+        emb = encode_dataset([text], model_name=GLOBAL_MODEL_NAME)
+        emb = emb.astype("float32")
+        faiss.normalize_L2(emb)
+        
+        scores, indices = FAISS_INDEX.search(emb, 1)
+        best_score = float(scores[0][0])
+        best_idx = int(indices[0][0])
+        
+        if best_idx == -1:
+            return {"status": "success", "match": None}
+            
+        cluster_id = FAISS_GROUP_IDS[best_idx]
+        return {
+            "status": "success", 
+            "match": {
+                "cluster_id": cluster_id,
+                "similarity": round(best_score, 3)
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
