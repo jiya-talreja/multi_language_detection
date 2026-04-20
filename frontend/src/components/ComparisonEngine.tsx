@@ -163,10 +163,13 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
     pointLight1.position.set(5, 5, 5);
     scene.add(pointLight1);
     const pointLight2 = new THREE.PointLight(0x4fd8b4, 1.5, 20);
-    pointLight2.position.set(-5, -3, -5);
+    pointLight2.position.set(-5, -5, 5);
     scene.add(pointLight2);
 
-    // Stars
+    let isDragging = false;
+    let prevMouse = { x: 0, y: 0 };
+    let reqId: number;
+    let t = 0;
     const starGeo = new THREE.BufferGeometry();
     const starPositions = [];
     for (let i = 0; i < 600; i++) {
@@ -328,8 +331,6 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
     canvas.addEventListener('mousemove', handleMouseMoveRay);
     canvas.addEventListener('click', handleClick);
 
-    let t = 0;
-    let reqId: number;
     const animate = () => {
       reqId = requestAnimationFrame(animate);
       t += 0.006;
