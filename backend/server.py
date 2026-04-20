@@ -15,6 +15,7 @@ from utils import clean_text
 from embed import encode_dataset
 from cluster import cluster_embeddings
 from text_chunking import chunk_dataframe
+from duplicate_classifier import classify_pair
 
 FAISS_INDEX = None
 FAISS_GROUP_IDS = None
@@ -171,12 +172,14 @@ async def detect_duplicates(
             
             # Vectorized similarity matrix for this cluster
             cluster_vecs = vectors_norm[cluster_indices]
+            raw_cluster_vecs = vectors[cluster_indices]
             sim_matrix = np.dot(cluster_vecs, cluster_vecs.T)
             
             # Pick the first record as the 'anchor' (representative) of the cluster
             anchor_rec = group_df.iloc[0]
             anchor_parent_id = str(anchor_rec.get("parent_id", anchor_rec["id"]))
             anchor_text = str(anchor_rec["text"]).strip().lower()
+            anchor_emb = raw_cluster_vecs[0]
             
             members = []
             seen_record_ids = {anchor_parent_id}
@@ -200,6 +203,9 @@ async def detect_duplicates(
                 seen_texts.add(record_text)
                 sim = sim_matrix[0, i]
                 
+                record_emb = raw_cluster_vecs[i]
+                reason = classify_pair(anchor_text, record_text, anchor_emb, record_emb)
+                
                 members.append({
                     "id": str(rec.get("parent_id", rec["id"])),
                     "name": str(rec["name"]),
@@ -207,7 +213,8 @@ async def detect_duplicates(
                     "phone": str(rec.get("phone", "")),
                     "text": str(rec["text"]),
                     "language": str(rec["language"]) if rec["language"] else "Unknown",
-                    "similarity": round(float(sim), 3)
+                    "similarity": round(float(sim), 3),
+                    "reason": reason
                 })
             
             if members:
