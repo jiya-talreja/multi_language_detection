@@ -9,7 +9,7 @@ interface EmbeddingProgressProps {
 
 const EmbeddingProgress: React.FC<EmbeddingProgressProps> = ({ totalChunks, isComplete, onDetectionStart }) => {
   const [progress, setProgress] = useState(0);
-  const batchSize = 32; // Matches backend batch size precisely
+  const batchSize = 32;
   const totalBatches = Math.ceil(totalChunks / batchSize);
   const currentBatch = Math.min(totalBatches, Math.floor((progress / 100) * totalBatches) + 1);
 
@@ -18,11 +18,9 @@ const EmbeddingProgress: React.FC<EmbeddingProgressProps> = ({ totalChunks, isCo
        setProgress(100);
        return;
     }
-    // Simulate progress while waiting for the real backend response
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 98) return prev;
-        // Adjusted to match the ~80s processing time seen in your terminal
         const step = Math.random() * 1.2;
         return prev + step;
       });

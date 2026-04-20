@@ -24,15 +24,12 @@ def main():
         print("Error: Dataset must contain a 'group_id' column for ground truth evaluation.")
         return
     
-    # We will use 'text' or 'name'
     text_col = "text" if "text" in df.columns else "name"
 
-    # Filter out singletons (groups of size 1) to make evaluation meaningful
     group_sizes = df["group_id"].value_counts()
     valid_groups = group_sizes[group_sizes >= 2].index
     df = df[df["group_id"].isin(valid_groups)]
     
-    # Sample to speed up evaluation if dataset is huge
     if len(valid_groups) > 200:
         sampled_groups = np.random.choice(valid_groups, 200, replace=False)
         df = df[df["group_id"].isin(sampled_groups)]
@@ -50,28 +47,21 @@ def main():
 
     print("\nCalculating metrics by generating all pairs...")
     
-    # To compute precision/recall for clustering, we look at pairs
-    # 1 if same group, 0 if diff group
     n = len(df)
     
-    # Avoid generating N^2 full matrix if N is large, but for 400 (200 groups * 2) it's fine.
-    # N=400 -> 160,000 pairs.
     if n > 2000:
         print("Dataset too large for exhaustive pair calculation. Please sample.")
         return
 
     true_labels = df["group_id"].values
     
-    # Create pairwise arrays
     y_true = (true_labels[:, None] == true_labels[None, :]).astype(int).flatten()
     y_pred = (predicted_labels[:, None] == predicted_labels[None, :]).astype(int).flatten()
     
-    # Remove diagonal (self-pairs)
     mask = ~np.eye(n, dtype=bool).flatten()
     y_true = y_true[mask]
     y_pred = y_pred[mask]
     
-    # If DBSCAN outputs -1 (noise), it shouldn't be paired with other -1s
     noise_mask = (predicted_labels[:, None] == -1) & (predicted_labels[None, :] == -1)
     noise_mask = noise_mask.flatten()[mask]
     y_pred[noise_mask] = 0 # -1 and -1 are not in the same cluster conceptually

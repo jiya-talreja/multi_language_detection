@@ -45,7 +45,6 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
         const sim = data.match.similarity;
         setSearchMessage(`Match found! (${Math.round(sim * 100)}% Match)`);
         
-        // Find in filtered clusters
         const idx = mappedClusters.findIndex(c => c.id === matchId);
         if (idx !== -1) {
            setActiveClusterIndex(idx);
@@ -57,7 +56,6 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
              }, 100);
            }
         } else {
-           // It might be filtered out
            setSearchMessage(`Match found in hidden category (${Math.round(sim * 100)}% Match). Change filter to view.`);
         }
       } else {
@@ -73,7 +71,6 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   
-  // Refs to store three.js objects for imperative updates
   const resolvedMeshesRef = useRef<{[key: string]: THREE.Mesh}>({});
 
   const filteredClusters = useMemo(() => {
@@ -133,7 +130,7 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
       targetSphericalRef.current = {
         theta: targetTheta,
         phi: targetPhi,
-        radius: r + 3.5 // Perfect zoom level to frame the node
+        radius: r + 3.5
       };
       isTransitioningRef.current = true;
     }
@@ -143,7 +140,6 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
   const sameCount = useMemo(() => clusters.filter(c => !c.isCrossLingual).length, [clusters]);
 
 
-  // Handle Three.js setup and teardown
   useEffect(() => {
     if (viewMode !== '3d' || !canvasRef.current) return;
     
@@ -245,7 +241,7 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
 
     const handleMouseDown = (e: MouseEvent) => { 
       isDragging = true; 
-      isTransitioningRef.current = false; // Stop flying if user interacts
+      isTransitioningRef.current = false;
       prevMouse = { x: e.clientX, y: e.clientY }; 
     };
     const handleMouseUp = () => { isDragging = false; };
@@ -290,7 +286,7 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
       
       if (hits.length > 0) {
         const mesh = hits[0].object as THREE.Mesh;
-        if (resolvedIds.has(mesh.userData.clusterId)) return; // skip resolved
+        if (resolvedIds.has(mesh.userData.clusterId)) return;
 
         const cl = mappedClusters[mesh.userData.clusterIndex];
         if (hoveredMesh !== mesh) {
@@ -336,10 +332,8 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
       t += 0.006;
 
       if (isTransitioningRef.current) {
-        // Smoothly interpolate towards target
         const lerpFactor = 0.08;
         
-        // Handle theta wrapping
         let diffTheta = targetSphericalRef.current.theta - sphericalRef.current.theta;
         while (diffTheta > Math.PI) diffTheta -= Math.PI * 2;
         while (diffTheta < -Math.PI) diffTheta += Math.PI * 2;
@@ -348,7 +342,6 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
         sphericalRef.current.phi += (targetSphericalRef.current.phi - sphericalRef.current.phi) * lerpFactor;
         sphericalRef.current.radius += (targetSphericalRef.current.radius - sphericalRef.current.radius) * lerpFactor;
 
-        // Stop transitioning when close enough
         if (Math.abs(diffTheta) < 0.001 && Math.abs(targetSphericalRef.current.phi - sphericalRef.current.phi) < 0.001) {
           isTransitioningRef.current = false;
         }
@@ -468,7 +461,6 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
         </div>
       </header>
 
-      {/* Search Bar */}
       <div style={{ padding: '16px 40px', background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '16px', zIndex: 10 }}>
         <form onSubmit={handleSearch} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ position: 'relative', flex: 1, maxWidth: '600px' }}>

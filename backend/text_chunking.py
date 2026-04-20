@@ -4,10 +4,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 def chunk_text_multilingual(text: str, max_chars: int = 800, overlap: int = 100) -> list[str]:
-    """
-    Splits text into chunks of at most `max_chars` characters, with an overlap of `overlap` characters.
-    Tries to find natural break points (spaces, punctuation) to avoid splitting words.
-    """
     if not isinstance(text, str) or not text.strip():
         return []
         
@@ -19,7 +15,6 @@ def chunk_text_multilingual(text: str, max_chars: int = 800, overlap: int = 100)
     start = 0
     text_len = len(text)
     
-    # Natural break points
     breaks = {' ', '\n', '\t', '.', ',', '。', '、', '！', '？', ';', '!', '?'}
     
     while start < text_len:
@@ -29,7 +24,6 @@ def chunk_text_multilingual(text: str, max_chars: int = 800, overlap: int = 100)
             chunks.append(text[start:].strip())
             break
             
-        # Try to find a natural break point near the end
         break_point = end
         for i in range(end, max(start, end - overlap), -1):
             if text[i-1] in breaks:
@@ -40,10 +34,8 @@ def chunk_text_multilingual(text: str, max_chars: int = 800, overlap: int = 100)
         if chunk:
             chunks.append(chunk)
             
-        # Ensure we move forward and overlap correctly
         next_start = break_point - overlap
         if next_start <= start:
-            # Fallback if overlap is too large or no break point was found
             next_start = break_point
             
         start = next_start
@@ -51,16 +43,11 @@ def chunk_text_multilingual(text: str, max_chars: int = 800, overlap: int = 100)
     return chunks
 
 def chunk_dataframe(df: pd.DataFrame, text_col: str = "text", max_chars: int = 800, overlap: int = 100) -> pd.DataFrame:
-    """
-    Takes a normalized DataFrame and chunks the text column into multiple rows if necessary.
-    Preserves all original columns and adds 'parent_id', 'chunk_id', and 'is_chunked' columns.
-    """
     if df.empty or text_col not in df.columns:
         return df.copy()
         
     chunked_records = []
     
-    # Ensure there's a unique id for parent tracking if not present
     df = df.copy()
     if "id" not in df.columns:
         df["id"] = range(len(df))
@@ -70,7 +57,6 @@ def chunk_dataframe(df: pd.DataFrame, text_col: str = "text", max_chars: int = 8
         chunks = chunk_text_multilingual(text, max_chars, overlap)
         
         if not chunks:
-            # Handle empty texts gracefully
             record = row.to_dict()
             record["parent_id"] = row["id"]
             record["chunk_id"] = 0
@@ -86,7 +72,6 @@ def chunk_dataframe(df: pd.DataFrame, text_col: str = "text", max_chars: int = 8
             record["chunk_id"] = i
             record["is_chunked"] = is_chunked
             
-            # Provide a unique ID for the chunk so downstream systems don't confuse rows
             if is_chunked:
                 record["id"] = f"{row['id']}_chunk{i}"
                 

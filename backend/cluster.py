@@ -5,10 +5,6 @@ import umap
 from sklearn.preprocessing import normalize
 from sklearn.metrics.pairwise import cosine_similarity
 
-
-# -------------------------------
-# STEP 1: MERGE CLUSTERS (NEW 🔥)
-# -------------------------------
 def merge_similar_clusters(df, embeddings, threshold=0.85):
     cluster_ids = df["predicted_group_id"].unique()
     cluster_ids = [cid for cid in cluster_ids if cid != -1]
@@ -50,10 +46,6 @@ def merge_similar_clusters(df, embeddings, threshold=0.85):
 
     return df
 
-
-# -------------------------------
-# STEP 2: REFINE DUPLICATES
-# -------------------------------
 def refine_duplicates(df, embeddings, threshold=0.72):
     final_rows = []
 
@@ -91,17 +83,11 @@ def refine_duplicates(df, embeddings, threshold=0.72):
     else:
         return pd.DataFrame(columns=df.columns)
 
-
-# -------------------------------
-# STEP 3: MAIN CLUSTER FUNCTION
-# -------------------------------
 def cluster_embeddings(embeddings: np.ndarray, df, min_cluster_size=3):
     print("Normalizing embeddings...")
     embeddings = normalize(embeddings)
 
-    # -------------------------------
-    # UMAP (dimension reduction)
-    # -------------------------------
+
     print("Running UMAP...")
     reducer = umap.UMAP(
         n_neighbors=25,
@@ -113,9 +99,7 @@ def cluster_embeddings(embeddings: np.ndarray, df, min_cluster_size=3):
     reduced = reducer.fit_transform(embeddings)
     print("UMAP done.")
 
-    # -------------------------------
-    # HDBSCAN clustering
-    # -------------------------------
+
     print("Running HDBSCAN...")
     clusterer = hdbscan.HDBSCAN(
         min_cluster_size=min_cluster_size,
@@ -128,15 +112,11 @@ def cluster_embeddings(embeddings: np.ndarray, df, min_cluster_size=3):
 
     df["predicted_group_id"] = labels
 
-    # -------------------------------
-    # 🔥 NEW STEP: MERGE CLUSTERS
-    # -------------------------------
+
     print("Merging similar clusters...")
     df = merge_similar_clusters(df, embeddings)
 
-    # -------------------------------
-    # REFINE INSIDE CLUSTERS
-    # -------------------------------
+
     print("Refining clusters...")
     df = refine_duplicates(df, embeddings)
 

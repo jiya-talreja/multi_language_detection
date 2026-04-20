@@ -15,16 +15,13 @@ def print_groups(df):
         if gid == -1:
             continue
 
-        # 🔥 remove duplicate sentences
         group = group.drop_duplicates(subset=["text"])
 
-        # 🔥 optional: keep only one per language (if column exists)
         if "language" in group.columns:
             group = group.drop_duplicates(subset=["language"])
 
         print(f"\n--- GROUP {gid} (size={len(group)}) ---")
 
-        # 🔥 print nicely using pandas
         print(group[["text"]].to_string(index=False))
 
 
@@ -37,9 +34,6 @@ def main():
 
     args = parser.parse_args()
 
-    # -------------------------------
-    # STEP 1: LOAD + NORMALIZE
-    # -------------------------------
     print(f"Reading and normalizing data from {args.input}...")
 
     try:
@@ -49,9 +43,6 @@ def main():
         print(f"Failed to load dataset: {str(e)}")
         return
 
-    # -------------------------------
-    # STEP 2: FILTER EMPTY TEXT
-    # -------------------------------
     print("Preparing AI-ready text...")
 
     df = df[df["text"].astype(str).str.strip() != ""].copy()
@@ -62,9 +53,6 @@ def main():
 
     texts = df["text"].tolist()
 
-    # -------------------------------
-    # STEP 3: EMBEDDINGS
-    # -------------------------------
     embeddings = encode_dataset(texts, model_name=args.model)
 
     # -------------------------------
@@ -72,9 +60,6 @@ def main():
     # -------------------------------
     groups = cluster_embeddings(embeddings, df)
 
-    # -------------------------------
-    # STEP 5: PRINT OUTPUT
-    # -------------------------------
     print_groups(groups)
 
     # -------------------------------

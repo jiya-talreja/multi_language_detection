@@ -8,7 +8,6 @@ const Background: React.FC = () => {
         particleCount={400}
         particleSpread={12}
         speed={0.1}
-        // Using vibrant pastel colors for the light theme
         particleColors={["#7c3aed", "#3b82f6", "#ec4899", "#10b981"]} 
         moveParticlesOnHover
         particleHoverFactor={2}

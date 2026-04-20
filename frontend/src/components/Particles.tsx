@@ -206,7 +206,6 @@ const Particles: React.FC<ParticlesProps> = ({
       program.uniforms.uTime.value = elapsed * 0.001;
 
       if (moveParticlesOnHover) {
-        // Easing / Smoothing
         mouseRef.current.x += (targetMouseRef.current.x - mouseRef.current.x) * 0.05;
         mouseRef.current.y += (targetMouseRef.current.y - mouseRef.current.y) * 0.05;
 
