@@ -10,10 +10,11 @@ interface ComparisonEngineProps {
   onRedo: (clusterId: string) => void;
 }
 
-export default function ComparisonEngine({ clusters, resolved, resolvedIds, onResolve }: ComparisonEngineProps) {
-  const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d');
+export default function ComparisonEngine({ clusters, resolved, resolvedIds, onResolve, onRedo }: ComparisonEngineProps) {
+  const [viewMode, setViewMode] = useState<'3d' | '2d'>('2d');
   const [activeClusterIndex, setActiveClusterIndex] = useState<number | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [langFilter, setLangFilter] = useState<'all' | 'cross' | 'same'>('all');
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -21,12 +22,19 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
   // Refs to store three.js objects for imperative updates
   const resolvedMeshesRef = useRef<{[key: string]: THREE.Mesh}>({});
 
+  const filteredClusters = useMemo(() => {
+    if (!clusters) return [];
+    if (langFilter === 'cross') return clusters.filter(c => c.isCrossLingual);
+    if (langFilter === 'same') return clusters.filter(c => !c.isCrossLingual);
+    return clusters;
+  }, [clusters, langFilter]);
+
   const mappedClusters = useMemo(() => {
-    return clusters.map((c, i) => {
-      // Evenly distribute points on a sphere
-      const phi = Math.acos(-1 + (2 * i + 1) / clusters.length);
-      const theta = Math.sqrt(clusters.length * Math.PI) * phi;
-      const r = 3 + Math.random() * 1.5;
+    if (!filteredClusters || filteredClusters.length === 0) return [];
+    return filteredClusters.map((c, i) => {
+      const phi = Math.acos(-1 + (2 * i + 1) / filteredClusters.length);
+      const theta = Math.sqrt(filteredClusters.length * Math.PI) * phi;
+      const r = Math.sqrt(filteredClusters.length) * 1.5 + 2;
       
       const count = c.members.length;
       let colorHex = 0x4fd8b4;
@@ -35,6 +43,7 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
 
       return {
         id: c.id,
+        isCrossLingual: !!c.isCrossLingual,
         index: i,
         name: c.anchor.name.split(' ').slice(0, 2).join(' ') || 'Group',
         master: c.anchor.name,
@@ -55,9 +64,13 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
         }))
       };
     });
-  }, [clusters]);
+  }, [filteredClusters]);
 
   const activeCluster = activeClusterIndex !== null ? mappedClusters[activeClusterIndex] : null;
+
+  const crossCount = useMemo(() => clusters.filter(c => c.isCrossLingual).length, [clusters]);
+  const sameCount = useMemo(() => clusters.filter(c => !c.isCrossLingual).length, [clusters]);
+
 
   // Handle Three.js setup and teardown
   useEffect(() => {
@@ -96,7 +109,7 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
     const newResolvedMeshes: {[key: string]: THREE.Mesh} = {};
 
     mappedClusters.forEach((cl) => {
-      const r = 0.28 + cl.records.length * 0.045;
+      const r = 0.45;
       const geo = new THREE.SphereGeometry(r, 48, 48);
 
       const col = new THREE.Color(cl.color);
@@ -118,7 +131,7 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
       newResolvedMeshes[cl.id] = mesh;
 
       if (!isRes) {
-        const ringGeo = new THREE.TorusGeometry(r + 0.12, 0.025, 8, 64);
+        const ringGeo = new THREE.TorusGeometry(0.57, 0.025, 8, 64);
         const ringMat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.4 });
         const ring = new THREE.Mesh(ringGeo, ringMat);
         ring.position.copy(mesh.position);
@@ -138,7 +151,7 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
       const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: isRes ? 0.4 : 0.9 });
       const sprite = new THREE.Sprite(spriteMat);
       sprite.scale.set(1.6, 0.4, 1);
-      sprite.position.set(cl.pos.x, cl.pos.y + r + 0.35, cl.pos.z);
+      sprite.position.set(cl.pos.x, cl.pos.y + 0.8, cl.pos.z);
       scene.add(sprite);
     });
 
@@ -319,6 +332,19 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
     <div className="comparison-engine-root">
       <header className="ce-header">
         <div className="ce-logo">JN<span>.ai</span></div>
+
+        <div className="ce-view-toggle" style={{ marginRight: '12px' }}>
+          <button className={`ce-toggle-btn ${langFilter === 'cross' ? 'active' : ''}`} onClick={() => { setLangFilter('cross'); setActiveClusterIndex(null); }} style={langFilter === 'cross' ? { background: '#7c6fff', color: '#fff' } : {}}>
+             Cross Lang <span style={{ marginLeft: '4px', opacity: 0.6, fontSize: '10px' }}>{crossCount}</span>
+          </button>
+          <button className={`ce-toggle-btn ${langFilter === 'same' ? 'active' : ''}`} onClick={() => { setLangFilter('same'); setActiveClusterIndex(null); }}>
+             Same Lang <span style={{ marginLeft: '4px', opacity: 0.6, fontSize: '10px' }}>{sameCount}</span>
+          </button>
+          <button className={`ce-toggle-btn ${langFilter === 'all' ? 'active' : ''}`} onClick={() => { setLangFilter('all'); setActiveClusterIndex(null); }}>
+             All
+          </button>
+        </div>
+
         <div className="ce-header-stats">
           <div className="ce-stat"><div className="ce-stat-val">{clusters.length}</div><div className="ce-stat-label">Clusters</div></div>
           <div className="ce-stat"><div className="ce-stat-val">{clusters.reduce((acc, c) => acc + c.members.length, 0)}</div><div className="ce-stat-label">Records</div></div>
@@ -384,11 +410,19 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
                     })}
                   </div>
                   <div className="ce-sidebar-footer">
-                    <button className="ce-btn ce-btn-merge" onClick={() => handleResolveAction('merge')}>⊞ Merge into Master</button>
-                    <div className="ce-btn-row">
-                      <button className="ce-btn ce-btn-keep" onClick={() => handleResolveAction('keep')}>✓ Keep All</button>
-                      <button className="ce-btn ce-btn-remove" onClick={() => handleResolveAction('remove')}>✕ Remove Duplicates</button>
-                    </div>
+                    {resolvedIds.has(activeCluster.id) ? (
+                      <button className="ce-btn" style={{ background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0', width: '100%', fontWeight: 600 }} onClick={() => onRedo(activeCluster.id)}>
+                        ↺ Redo Decision
+                      </button>
+                    ) : (
+                      <>
+                        <button className="ce-btn ce-btn-merge" onClick={() => handleResolveAction('merge')}>⊞ Merge into Master</button>
+                        <div className="ce-btn-row">
+                          <button className="ce-btn ce-btn-keep" onClick={() => handleResolveAction('keep')}>✓ Keep All</button>
+                          <button className="ce-btn ce-btn-remove" onClick={() => handleResolveAction('remove')}>✕ Remove Duplicates</button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </>
               )}
@@ -443,9 +477,17 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
                   )}
                   
                   <div className="ce-card-actions" style={{ marginTop: expandedCards.has(cl.id) ? '16px' : '20px' }}>
-                    <button className="ce-btn ce-btn-keep" disabled={isResolved} onClick={() => handleResolve2D(cl.id, 'keep')}>✓ Keep All</button>
-                    <button className="ce-btn ce-btn-remove" disabled={isResolved} onClick={() => handleResolve2D(cl.id, 'remove')}>✕ Remove</button>
-                    <button className="ce-btn ce-btn-merge" disabled={isResolved} onClick={() => handleResolve2D(cl.id, 'merge')}>⊞ Merge</button>
+                    {isResolved ? (
+                      <button className="ce-btn" style={{ background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0', width: '100%', fontWeight: 600 }} onClick={() => onRedo(cl.id)}>
+                        ↺ Redo Decision
+                      </button>
+                    ) : (
+                      <>
+                        <button className="ce-btn ce-btn-keep" onClick={() => handleResolve2D(cl.id, 'keep')}>✓ Keep All</button>
+                        <button className="ce-btn ce-btn-remove" onClick={() => handleResolve2D(cl.id, 'remove')}>✕ Remove</button>
+                        <button className="ce-btn ce-btn-merge" onClick={() => handleResolve2D(cl.id, 'merge')}>⊞ Merge</button>
+                      </>
+                    )}
                   </div>
                 </div>
               );
