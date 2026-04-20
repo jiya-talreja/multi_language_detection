@@ -1,67 +1,93 @@
 import argparse
-import pathlib
 import pandas as pd
-from utils import clean_text
+
 from embed import encode_dataset
 from cluster import cluster_embeddings
-from text_chunking import chunk_dataframe
 from normalize import load_file, standardize_dataframe
+
+
+def print_groups(df):
+    print("\n--- GROUPS ---")
+
+    grouped = df.groupby("predicted_group_id")
+
+    for gid, group in grouped:
+        if gid == -1:
+            continue
+
+        # 🔥 remove duplicate sentences
+        group = group.drop_duplicates(subset=["text"])
+
+        # 🔥 optional: keep only one per language (if column exists)
+        if "language" in group.columns:
+            group = group.drop_duplicates(subset=["language"])
+
+        print(f"\n--- GROUP {gid} (size={len(group)}) ---")
+
+        # 🔥 print nicely using pandas
+        print(group[["text"]].to_string(index=False))
+
 
 def main():
     parser = argparse.ArgumentParser(description="Multilingual semantic deduplication pipeline")
-    parser.add_argument("--input", type=str, required=True, help="Input CSV file path")
-    parser.add_argument("--output", type=str, default="results", help="Output directory path")
-    parser.add_argument("--model", type=str, default="paraphrase-multilingual-MiniLM-L12-v2", help="SentenceTransformer model name")
-    parser.add_argument("--eps", type=float, default=0.3, help="DBSCAN eps parameter")
-    parser.add_argument("--min-samples", type=int, default=2, help="DBSCAN min_samples parameter")
-    parser.add_argument("--name-col", type=str, default="name", help="Column name for record name (or text)")
-    parser.add_argument("--desc-col", type=str, default="description", help="Column name for record description")
+
+    parser.add_argument("--input", type=str, required=True, help="Input CSV/XLSX file path")
+    parser.add_argument("--model", type=str, default="paraphrase-multilingual-MiniLM-L12-v2")
+    parser.add_argument("--output", type=str, default="results.csv", help="Output CSV file path")
 
     args = parser.parse_args()
 
+    # -------------------------------
+    # STEP 1: LOAD + NORMALIZE
+    # -------------------------------
     print(f"Reading and normalizing data from {args.input}...")
+
     try:
         raw_df = load_file(args.input)
-        df = standardize_dataframe(raw_df, name_col=args.name_col, desc_col=args.desc_col)
+        df = standardize_dataframe(raw_df)
     except Exception as e:
         print(f"Failed to load dataset: {str(e)}")
         return
 
-    # The normalization layer already provides a 'text' column optimized for AI
+    # -------------------------------
+    # STEP 2: FILTER EMPTY TEXT
+    # -------------------------------
     print("Preparing AI-ready text...")
-    
-    # Filter out empty records
-    valid_mask = df["text"].str.strip() != ""
-    if not valid_mask.all():
-        print(f"Dropping {len(df) - valid_mask.sum()} records with empty text after normalization.")
-        df = df[valid_mask].copy()
 
-    # Apply Chunking
-    print("Applying text chunking to avoid context window truncation...")
-    df = chunk_dataframe(df, max_chars=800, overlap=100)
+    df = df[df["text"].astype(str).str.strip() != ""].copy()
+
+    if df.empty:
+        print("No valid text found. Exiting.")
+        return
 
     texts = df["text"].tolist()
 
-    if not texts:
-        print("No valid text data to process. Exiting.")
-        return
+    # -------------------------------
+    # STEP 3: EMBEDDINGS
+    # -------------------------------
+    embeddings = encode_dataset(texts, model_name=args.model)
 
-    # Embed
-    vectors = encode_dataset(texts, model_name=args.model)
+    # -------------------------------
+    # STEP 4: CLUSTERING (HDBSCAN + UMAP)
+    # -------------------------------
+    groups = cluster_embeddings(embeddings, df)
 
-    # Cluster
-    groups = cluster_embeddings(vectors, eps=args.eps, min_samples=args.min_samples)
-    
-    # Assign cluster IDs
-    df["predicted_group_id"] = groups
+    # -------------------------------
+    # STEP 5: PRINT OUTPUT
+    # -------------------------------
+    print_groups(groups)
 
-    # Setup output
-    out_dir = pathlib.Path(args.output)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_file = out_dir / "deduped.csv"
-    
-    df.to_csv(out_file, index=False)
-    print(f"Success! Output saved to {out_file}")
+    # -------------------------------
+    # STEP 6: SAVE TO FILE
+    # -------------------------------
+    try:
+        groups.to_csv(args.output, index=False)
+        print(f"\nSuccess! Results saved to {args.output}")
+    except Exception as e:
+        print(f"\nFailed to save results: {str(e)}")
+
+    print("\nDone.")
+
 
 if __name__ == "__main__":
     main()
