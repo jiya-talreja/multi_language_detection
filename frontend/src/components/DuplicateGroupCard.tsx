@@ -14,6 +14,7 @@ export interface ClusterMember {
 
 export interface DuplicateCluster {
   id: string;
+  isCrossLingual?: boolean;
   anchor: {
     id: string;
     name: string;
