@@ -228,12 +228,6 @@ def standardize_dataframe(df: pd.DataFrame, name_col: str = None, desc_col: str 
         if n_low == d_low:
             return clean_text(name)
             
-        # If name is a subset of description or vice versa
-        if n_low in d_low:
-            return clean_text(desc)
-        if d_low in n_low:
-            return clean_text(name)
-            
         # Meaningful combination
         combined = f"{name}: {desc}"
         return clean_text(combined)
