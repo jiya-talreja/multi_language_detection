@@ -1,5 +1,31 @@
-name,description
-Hello,This is a test greeting.
-Hi there,Another test greeting.
-Bonjour,Un test de salutation.
-Hola,Una prueba de saludo.
+name,description,language,expected_group
+Apple,A common fruit that is red or green,en,1
+りんご,赤または緑の一般的な果物,ja,1
+苹果,一种常见的红色或绿色水果,zh,1
+تفاحة,فاكهة شائعة حمراء أو خضراء,ar,1
+แอปเปิล,ผลไม้ทั่วไปที่มีสีแดงหรือสีเขียว,th,1
+Laptop Computer,A portable personal computer for everyday use,en,2
+ノートパソコン,日常使用のためのポータブルパソコン,ja,2
+笔记本电脑,用于日常使用的便携式个人计算机,zh,2
+Ordinateur portable,Un ordinateur personnel portable pour usage quotidien,fr,2
+Laptop,Portable PC for daily use,en,2
+Coffee,A hot beverage made from roasted coffee beans,en,3
+コーヒー,焙煎したコーヒー豆から作られた温かい飲み物,ja,3
+咖啡,由烘焙咖啡豆制成的热饮,zh,3
+Kaffee,Ein heißes Getränk aus gerösteten Kaffeebohnen,de,3
+Café,Una bebida caliente hecha de granos de café tostados,es,3
+قهوة,مشروب ساخن مصنوع من حبوب القهوة المحمصة,ar,3
+Hospital,A medical facility for treating patients,en,4
+病院,患者を治療する医療施設,ja,4
+医院,用于治疗患者的医疗机构,zh,4
+Hôpital,Un établissement médical pour traiter les patients,fr,4
+مستشفى,مرفق طبي لعلاج المرضى,ar,4
+โรงพยาบาล,สถานพยาบาลสำหรับรักษาผู้ป่วย,th,4
+Smartphone,A mobile phone with advanced computing capability,en,5
+スマートフォン,高度な計算機能を持つ携帯電話,ja,5
+智能手机,具有高级计算能力的移动电话,zh,5
+Téléphone intelligent,Un téléphone mobile avec des capacités informatiques avancées,fr,5
+هاتف ذكي,هاتف محمول بقدرات حوسبة متقدمة,ar,5
+สมาร์ทโฟน,โทรศัพท์มือถือที่มีความสามารถในการคำนวณขั้นสูง,th,5
+Handphone pintar,Ponsel dengan kemampuan komputasi canggih,id,5
+Galaxy Phone,Samsung mobile device with smart features,en,5

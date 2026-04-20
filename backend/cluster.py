@@ -54,7 +54,7 @@ def merge_similar_clusters(df, embeddings, threshold=0.85):
 # -------------------------------
 # STEP 2: REFINE DUPLICATES
 # -------------------------------
-def refine_duplicates(df, embeddings, threshold=0.88):
+def refine_duplicates(df, embeddings, threshold=0.72):
     final_rows = []
 
     for gid, group in df.groupby("predicted_group_id"):
@@ -78,6 +78,12 @@ def refine_duplicates(df, embeddings, threshold=0.88):
                     keep.add(j)
 
         filtered = group.iloc[list(keep)]
+        
+        if len(filtered) < 2:
+            filtered = group
+            
+        print(f"Refine: group {gid} kept {len(filtered)}/{len(group)} members")
+        
         final_rows.append(filtered)
 
     if final_rows:

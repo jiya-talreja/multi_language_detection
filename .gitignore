@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.log
+backend/results/
+backend/input/*.csv
+node_modules/
+dist/
+.DS_Store

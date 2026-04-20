@@ -204,7 +204,12 @@ async def detect_duplicates(
                 sim = sim_matrix[0, i]
                 
                 record_emb = raw_cluster_vecs[i]
-                reason = classify_pair(anchor_text, record_text, anchor_emb, record_emb)
+                reason = classify_pair(
+                    anchor_text, record_text,
+                    anchor_emb, record_emb,
+                    lang1=str(anchor_rec.get("language", "")),
+                    lang2=str(rec.get("language", ""))
+                )
                 
                 members.append({
                     "id": str(rec.get("parent_id", rec["id"])),
