@@ -22,6 +22,7 @@ function App() {
   const [isEmbeddingComplete, setIsEmbeddingComplete] = useState(false);
   const [storedClusters, setStoredClusters] = useState<DuplicateCluster[]>([]);
   const [resolvedIds, setResolvedIds] = useState<Set<string>>(new Set());
+  const [resolvedDecisions, setResolvedDecisions] = useState<Record<string, {action: string}>>({});
 
   const handleFileAccepted = useCallback(async (file: File) => {
     setHasFile(true);
@@ -124,12 +125,13 @@ function App() {
     });
   };
 
-  const handleResolve = useCallback((id: string, _action: 'keep' | 'remove' | 'merge') => {
+  const handleResolve = useCallback((id: string, action: 'keep' | 'remove' | 'merge') => {
     setResolvedIds(prev => {
       const next = new Set(prev);
       next.add(id);
       return next;
     });
+    setResolvedDecisions(prev => ({...prev, [id]: {action}}));
     setResolved(prev => prev + 1);
   }, []);
 
@@ -137,6 +139,11 @@ function App() {
     setResolvedIds(prev => {
       const next = new Set(prev);
       next.delete(id);
+      return next;
+    });
+    setResolvedDecisions(prev => {
+      const next = {...prev};
+      delete next[id];
       return next;
     });
     setResolved(prev => Math.max(0, prev - 1));
@@ -212,6 +219,7 @@ function App() {
                     clusters={clusters} 
                     resolved={resolved} 
                     resolvedIds={resolvedIds}
+                    resolvedDecisions={resolvedDecisions}
                     onResolve={handleResolve} 
                     onRedo={handleRedo}
                   />
