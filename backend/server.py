@@ -129,90 +129,102 @@ async def detect_duplicates(
         vectors = encode_dataset(texts, model_name=GLOBAL_MODEL_NAME)
 
         # 5. Cluster
-        print("Clustering...")
-        labels = cluster_embeddings(vectors, eps=eps)
-        working_df["cluster_id"] = labels
+        print("Clustering (UMAP + HDBSCAN)...")
+        working_df = cluster_embeddings(vectors, working_df)
+        
+        # In the new version, cluster_embeddings returns a dataframe with 'predicted_group_id'
+        # It also filters out noise (-1) automatically during the refine_duplicates step.
+        working_df["cluster_id"] = working_df["predicted_group_id"]
 
-        # 6. Build Pairs for the UI
-        print("Building pairs and calculating similarities...")
-        pairs = []
-        pair_id_counter = 1
+        # 6. Build Clusters for the UI
+        print("Building clusters for the UI...")
+        clusters = []
+        cluster_id_counter = 1
         
         # Optimize by normalizing all vectors once
         import numpy as np
-        # Avoid divide by zero
         norms = np.linalg.norm(vectors, axis=1, keepdims=True)
         norms[norms == 0] = 1
         vectors_norm = vectors / norms
         
         # Iterate over each cluster that is not noise (-1)
-        for cluster_id in sorted(working_df["cluster_id"].unique()):
-            if cluster_id == -1:
+        # Note: In the new version, cluster_id is 'predicted_group_id' and noise is handled by refine_duplicates
+        for group_id in sorted(working_df["predicted_group_id"].unique()):
+            if group_id == -1:
                 continue
                 
-            cluster_indices = working_df[working_df["cluster_id"] == cluster_id].index.tolist()
-            
-            # Skip massive clusters to prevent memory explosion
-            if len(cluster_indices) > 500:
-                print(f"Warning: Cluster {cluster_id} has {len(cluster_indices)} items. Taking a sample to prevent crash.")
-                cluster_indices = cluster_indices[:500]
+            group_df = working_df[working_df["predicted_group_id"] == group_id]
+            if len(group_df) < 2:
+                continue
+                
+            if len(group_df) > 50:
+                print(f"Warning: Cluster {group_id} has {len(group_df)} items. Taking a sample.")
+                group_df = group_df.iloc[:50]
+                
+            cluster_indices = group_df.index.tolist()
             
             # Vectorized similarity matrix for this cluster
             cluster_vecs = vectors_norm[cluster_indices]
             sim_matrix = np.dot(cluster_vecs, cluster_vecs.T)
             
-            # Generate all pairs within this cluster
-            for i in range(len(cluster_indices)):
-                for j in range(i + 1, len(cluster_indices)):
-                    idxA = cluster_indices[i]
-                    idxB = cluster_indices[j]
-                    
-                    recA = working_df.iloc[idxA]
-                    recB = working_df.iloc[idxB]
-                    
-                    # If they belong to the same original record, don't pair them
-                    if str(recA.get("parent_id", recA["id"])) == str(recB.get("parent_id", recB["id"])):
-                        continue
-                        
-                    sim = sim_matrix[i, j]
-                    
-                    pairs.append({
-                        "id": f"pair-{pair_id_counter}",
-                        "similarity": round(float(sim), 3),
-                    "recordA": {
-                        "id": str(recA.get("parent_id", recA["id"])),
-                        "name": str(recA["name"]),
-                        "email": str(recA["email"]),
-                        "phone": str(recA["phone"]),
-                        "text": str(recA["text"]),
-                        "language": str(recA["language"]) if recA["language"] else "Unknown",
-                        "languageCode": str(recA["language"])[:2].lower() if recA["language"] else "en",
-                        "isChunk": bool(recA.get("is_chunked", False))
-                    },
-                    "recordB": {
-                        "id": str(recB.get("parent_id", recB["id"])),
-                        "name": str(recB["name"]),
-                        "email": str(recB["email"]),
-                        "phone": str(recB["phone"]),
-                        "text": str(recB["text"]),
-                        "language": str(recB["language"]) if recB["language"] else "Unknown",
-                        "languageCode": str(recB["language"])[:2].lower() if recB["language"] else "en",
-                        "isChunk": bool(recB.get("is_chunked", False))
-                    }
+            # Pick the first record as the 'anchor' (representative) of the cluster
+            anchor_rec = group_df.iloc[0]
+            anchor_parent_id = str(anchor_rec.get("parent_id", anchor_rec["id"]))
+            anchor_text = str(anchor_rec["text"]).strip().lower()
+            
+            members = []
+            seen_record_ids = {anchor_parent_id}
+            seen_texts = {anchor_text}
+            
+            for i in range(1, len(cluster_indices)):
+                rec = group_df.iloc[i]
+                record_id = str(rec.get("parent_id", rec["id"]))
+                record_text = str(rec["text"]).strip().lower()
+                
+                # Filter 1: If we've already included this record ID, skip its other chunks
+                if record_id in seen_record_ids:
+                    continue
+                
+                # Filter 2: If the text is an EXACT match to something already in the cluster, skip it
+                # This prevents "self-detection" of identical rows and focuses on semantic/cross-lingual matches
+                if record_text in seen_texts:
+                    continue
+                
+                seen_record_ids.add(record_id)
+                seen_texts.add(record_text)
+                sim = sim_matrix[0, i]
+                
+                members.append({
+                    "id": str(rec.get("parent_id", rec["id"])),
+                    "name": str(rec["name"]),
+                    "email": str(rec.get("email", "")),
+                    "phone": str(rec.get("phone", "")),
+                    "text": str(rec["text"]),
+                    "language": str(rec["language"]) if rec["language"] else "Unknown",
+                    "similarity": round(float(sim), 3)
                 })
-                pair_id_counter += 1
+            
+            if members:
+                clusters.append({
+                    "id": f"cluster-{cluster_id_counter}",
+                    "anchor": {
+                        "id": str(anchor_rec.get("parent_id", anchor_rec["id"])),
+                        "name": str(anchor_rec["name"]),
+                        "email": str(anchor_rec.get("email", "")),
+                        "phone": str(anchor_rec.get("phone", "")),
+                        "text": str(anchor_rec["text"]),
+                        "language": str(anchor_rec["language"]) if anchor_rec["language"] else "Unknown"
+                    },
+                    "members": members,
+                    "avgSimilarity": round(float(np.mean([m["similarity"] for m in members])), 3)
+                })
+                cluster_id_counter += 1
 
-        # Sort pairs by similarity descending
-        pairs.sort(key=lambda x: x["similarity"], reverse=True)
+        # Sort clusters by average similarity descending
+        clusters.sort(key=lambda x: x["avgSimilarity"], reverse=True)
         
-        # Limit the number of pairs returned to the frontend to prevent browser crashing
-        MAX_PAIRS = 500
-        if len(pairs) > MAX_PAIRS:
-            print(f"Limiting pairs from {len(pairs)} to {MAX_PAIRS} to prevent frontend crash.")
-            pairs = pairs[:MAX_PAIRS]
-
-        print(f"Returning {len(pairs)} pairs to the UI.")
-        return {"status": "success", "pairs": pairs, "total_records_processed": len(working_df)}
+        print(f"Returning {len(clusters)} clusters to the UI.")
+        return {"status": "success", "clusters": clusters, "total_records_processed": len(working_df)}
 
     except Exception as e:
         import traceback
