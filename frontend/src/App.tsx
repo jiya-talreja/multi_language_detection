@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Background from './components/Background';
 import DropZone from './components/DropZone';
@@ -6,30 +6,12 @@ import ComparisonEngine from './components/ComparisonEngine';
 import NormalizationReview from './components/NormalizationReview';
 import ChunkingReview from './components/ChunkingReview';
 import EmbeddingProgress from './components/EmbeddingProgress';
-import type { DuplicatePair } from './components/DuplicatePairCard';
-
-// ─── Demo seed data ─────────────────────────────────────────────────────────
-const DEMO_PAIRS: DuplicatePair[] = [
-  {
-    id: 'pair-1',
-    similarity: 0.94,
-    recordA: {
-      id: '001',
-      name: 'محمد علي حسن',
-      language: 'Arabic',
-    },
-    recordB: {
-      id: '002',
-      name: 'Mohammed Ali Hassan',
-      language: 'English',
-    },
-  },
-];
+import type { DuplicateCluster } from './components/DuplicateGroupCard';
 
 function App() {
   const [hasFile, setHasFile] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [pairs, setPairs] = useState<DuplicatePair[]>([]);
+  const [clusters, setClusters] = useState<DuplicateCluster[]>([]);
   const [resolved, setResolved] = useState(0);
   const [normalizationData, setNormalizationData] = useState<any[]>([]);
   const [showNormalizationReview, setShowNormalizationReview] = useState(false);
@@ -38,13 +20,13 @@ function App() {
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isEmbeddingComplete, setIsEmbeddingComplete] = useState(false);
-  const [storedPairs, setStoredPairs] = useState<DuplicatePair[]>([]);
+  const [storedClusters, setStoredClusters] = useState<DuplicateCluster[]>([]);
   const [resolvedIds, setResolvedIds] = useState<Set<string>>(new Set());
 
   const handleFileAccepted = useCallback(async (file: File) => {
     setHasFile(true);
     setIsProcessing(true);
-    setPairs([]);
+    setClusters([]);
     setResolved(0);
     setError(null);
     setCurrentFile(file);
@@ -106,7 +88,7 @@ function App() {
     setIsProcessing(true);
     setShowChunkingReview(false);
     setIsEmbeddingComplete(false);
-    setStoredPairs([]);
+    setStoredClusters([]);
 
     const formData = new FormData();
     formData.append("file", currentFile);
@@ -124,7 +106,7 @@ function App() {
       }
 
       const data = await response.json();
-      setStoredPairs(data.pairs);
+      setStoredClusters(data.clusters);
       setTimeout(() => setIsEmbeddingComplete(true), 500);
     } catch (error) {
       console.error("Error processing file:", error);
@@ -135,14 +117,14 @@ function App() {
 
   const handleFinalDetection = () => {
     setIsProcessing(false);
-    storedPairs.forEach((pair, i) => {
+    storedClusters.forEach((cluster, i) => {
       setTimeout(() => {
-        setPairs(prev => [...prev, pair]);
+        setClusters(prev => [...prev, cluster]);
       }, i * 150);
     });
   };
 
-  const handleResolve = useCallback((id: string, _action: 'keep' | 'remove') => {
+  const handleResolve = useCallback((id: string, _action: 'keep' | 'remove' | 'merge') => {
     setResolvedIds(prev => {
       const next = new Set(prev);
       next.add(id);
@@ -160,7 +142,7 @@ function App() {
     setResolved(prev => Math.max(0, prev - 1));
   }, []);
 
-  const showResults = hasFile && !isProcessing && (pairs.length > 0 || resolved > 0) && !showNormalizationReview && !showChunkingReview;
+  const showResults = hasFile && !isProcessing && (clusters.length > 0 || resolved > 0) && !showNormalizationReview && !showChunkingReview;
 
   return (
     <div className={`h-screen w-full relative font-inter text-[#1a1a2e] overflow-hidden transition-colors duration-1000 ${showResults ? 'bg-grid' : ''}`}>
@@ -168,7 +150,7 @@ function App() {
 
       <div className="relative z-10 h-full w-full overflow-y-auto">
         <main className="min-h-full w-full flex flex-col items-center justify-center py-12">
-          <div className={`w-full flex flex-col items-center ${(!hasFile || error || (isProcessing && !showNormalizationReview && !showChunkingReview && pairs.length === 0)) ? 'px-8 max-w-4xl' : `${(showNormalizationReview || showChunkingReview) ? 'max-w-none w-full h-full' : 'px-8 max-w-[1240px] mx-auto pt-28 pb-20'}`}`}>
+          <div className={`w-full flex flex-col items-center ${(!hasFile || error || (isProcessing && !showNormalizationReview && !showChunkingReview && clusters.length === 0)) ? 'px-8 max-w-4xl' : `${(showNormalizationReview || showChunkingReview) ? 'max-w-none w-full h-full' : 'px-8 max-w-[1240px] mx-auto pt-28 pb-20'}`}`}>
 
             <AnimatePresence mode="wait">
               {!hasFile && (
@@ -186,7 +168,7 @@ function App() {
               )}
             </AnimatePresence>
 
-            {hasFile && isProcessing && !showNormalizationReview && !showChunkingReview && pairs.length === 0 && chunkingData.length === 0 && (
+            {hasFile && isProcessing && !showNormalizationReview && !showChunkingReview && clusters.length === 0 && chunkingData.length === 0 && (
                 <div className="flex flex-col items-center justify-center gap-6">
                   <div className="relative w-16 h-16 flex items-center justify-center">
                     <div className="absolute inset-0 rounded-full border-2 border-violet-200/20"></div>
@@ -197,7 +179,7 @@ function App() {
                 </div>
             )}
 
-            {hasFile && isProcessing && !showChunkingReview && pairs.length === 0 && chunkingData.length > 0 && (
+            {hasFile && isProcessing && !showChunkingReview && clusters.length === 0 && chunkingData.length > 0 && (
                 <EmbeddingProgress totalChunks={chunkingData.length} isComplete={isEmbeddingComplete} onDetectionStart={handleFinalDetection} />
             )}
 
@@ -224,10 +206,10 @@ function App() {
             </AnimatePresence>
 
             <AnimatePresence mode="wait">
-              {hasFile && !isProcessing && (pairs.length > 0 || resolved > 0) && (
+              {hasFile && !isProcessing && (clusters.length > 0 || resolved > 0) && (
                 <motion.div key="engine" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="w-full pt-24 pb-12">
                   <ComparisonEngine 
-                    pairs={pairs} 
+                    clusters={clusters} 
                     resolved={resolved} 
                     resolvedIds={resolvedIds}
                     onResolve={handleResolve} 
@@ -237,10 +219,10 @@ function App() {
               )}
             </AnimatePresence>
             
-            {hasFile && !isProcessing && !showNormalizationReview && !showChunkingReview && pairs.length === 0 && resolved > 0 && (
+            {hasFile && !isProcessing && !showNormalizationReview && !showChunkingReview && clusters.length === 0 && resolved > 0 && (
                 <div className="flex flex-col items-center justify-center gap-6 text-center py-20">
                    <h2 className="text-6xl font-extralight text-slate-900 tracking-tight">Database Sanitized</h2>
-                   <p className="text-slate-500 text-xl font-light">All detected duplicates resolved.</p>
+                   <p className="text-slate-500 text-xl font-light">All detected duplicate groups resolved.</p>
                    <button onClick={() => setHasFile(false)} className="px-12 py-4 bg-slate-900 text-white rounded-full font-bold">Upload Another File</button>
                 </div>
             )}
