@@ -11,11 +11,13 @@ Wrapped in a **Zen-Light premium interface**, JN.ai combines high-performance 3D
 
 - **🌐 Cross-Lingual Detection**: Seamlessly identifies duplicates between different languages (e.g., Arabic, Russian, Japanese, English).
 - **🧠 Semantic Understanding**: Uses transformer-based embeddings to understand context, not just characters.
+- **🤖 Auto-Classification**: Intelligent duplicate labeling (Exact, Typo, Cross-Language, Codemix) using semantic heuristics.
+- **🔍 AI Search**: Real-time semantic search bar powered by FAISS for instant duplicate lookup.
 - **✨ Premium UI/UX**: 
-  - **Interactive Particle Background**: OGL-powered 3D particles that react to your cursor.
-  - **Glassmorphic Design**: Modern, translucent components for a clean, professional feel.
+  - **3D Graph Visualization**: Three.js powered interactive 3D cluster graph.
+  - **Zen-Light Interface**: Modern, translucent glassmorphic design for distraction-free resolution.
   - **Fluid Animations**: Powered by Framer Motion for smooth state transitions.
-- **⚡ High Performance**: Efficient clustering using DBSCAN for large-scale datasets.
+- **⚡ High Performance**: Efficient clustering using HDBSCAN and UMAP for high-accuracy semantic grouping.
 
 ---
 
@@ -28,11 +30,13 @@ Wrapped in a **Zen-Light premium interface**, JN.ai combines high-performance 3D
 - **OGL** (High-performance WebGL library for particles)
 - **Framer Motion** (Animations)
 
-### **Backend (Data Science Pipeline)**
-- **Sentence Transformers**: `paraphrase-multilingual-MiniLM-L12-v2`
-- **Scikit-Learn**: DBSCAN clustering algorithm
-- **Pandas & NumPy**: Efficient data manipulation
-- **XML/TMX Processing**: Industry-standard translation memory support
+### **Backend (FastAPI + Data Science)**
+- **FastAPI**: Modern, high-performance web framework for the API.
+- **Sentence Transformers**: `paraphrase-multilingual-MiniLM-L12-v2` for cross-lingual embeddings.
+- **FAISS**: Facebook AI Similarity Search for real-time semantic indexing.
+- **HDBSCAN & UMAP**: Advanced density-based clustering and dimensionality reduction.
+- **Pandas & NumPy**: Efficient data manipulation and normalization.
+- **Langid**: Automatic language detection for improved metadata accuracy.
 
 ---
 
@@ -41,13 +45,15 @@ Wrapped in a **Zen-Light premium interface**, JN.ai combines high-performance 3D
 ```bash
 ├── frontend/               # React + Vite application
 │   ├── src/
-│   │   ├── components/     # UI Components (Particles, Comparison Engine, etc.)
+│   │   ├── components/     # UI Components (3D Comparison Engine, AI Search, etc.)
 │   │   └── App.tsx         # Main application logic
-├── backend/                # ML Pipeline & Scripts
-│   ├── embeddings_used.py  # Core clustering logic
-│   ├── test_embedding.py   # Model validation scripts
-│   └── input/              # TMX processing scripts
-├── assets/                 # Brand assets and mockups
+├── backend/                # ML Pipeline & FastAPI Server
+│   ├── server.py           # FastAPI Server Entry point
+│   ├── cluster.py          # HDBSCAN + UMAP Clustering logic
+│   ├── duplicate_classifier.py # Auto-labeling logic (Typo, Cross-Lang, etc.)
+│   ├── embed.py            # Sentence-transformer embedding logic
+│   ├── normalize.py        # Data standardization layer
+│   └── text_chunking.py    # Recursive character chunking for large records
 └── README.md               # This masterpiece
 ```
 
@@ -95,10 +101,13 @@ Wrapped in a **Zen-Light premium interface**, JN.ai combines high-performance 3D
 
 ---
 
-## 📈 Roadmap
-- [ ] Live API connection between React and Python (FastAPI).
-- [ ] Support for direct Excel/CSV uploads with real-time processing.
-- [ ] Exportable "Conflict Resolution" reports.
+- [x] Live API connection between React and Python (FastAPI).
+- [x] Support for direct Excel/CSV/TSV uploads with real-time processing.
+- [x] Recursive Character Chunking for long text support.
+- [x] 3D Interaction Layer with real-time node hovering and inspection.
+- [x] AI Semantic Search with FAISS indexing.
+- [x] Auto-Labeling for duplicate types (Typo, Cross-Lang).
+- [x] Exportable CSV reports with resolution tracking.
 - [ ] Custom similarity threshold sliders in the UI.
 
 ---
