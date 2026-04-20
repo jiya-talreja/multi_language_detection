@@ -205,8 +205,12 @@ async def detect_duplicates(
                 })
             
             if members:
+                anchor_lang = str(anchor_rec["language"]) if anchor_rec["language"] else "Unknown"
+                is_cross_lingual = any(m["language"] != anchor_lang for m in members)
+                
                 clusters.append({
                     "id": f"cluster-{cluster_id_counter}",
+                    "isCrossLingual": is_cross_lingual,
                     "anchor": {
                         "id": str(anchor_rec.get("parent_id", anchor_rec["id"])),
                         "name": str(anchor_rec["name"]),
