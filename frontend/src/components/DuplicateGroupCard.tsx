@@ -10,6 +10,7 @@ export interface ClusterMember {
   text?: string;
   language: string;
   similarity: number;
+  reason?: string;
 }
 
 export interface DuplicateCluster {
