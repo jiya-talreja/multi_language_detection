@@ -13,6 +13,7 @@ interface ComparisonEngineProps {
 export default function ComparisonEngine({ clusters, resolved, resolvedIds, onResolve }: ComparisonEngineProps) {
   const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d');
   const [activeClusterIndex, setActiveClusterIndex] = useState<number | null>(null);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -38,6 +39,7 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
         name: c.anchor.name.split(' ').slice(0, 2).join(' ') || 'Group',
         master: c.anchor.name,
         masterLang: c.anchor.language,
+        masterText: c.anchor.text,
         avgSim: Math.round(c.avgSimilarity * 100),
         color: colorHex,
         pos: {
@@ -48,6 +50,7 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
         records: c.members.map(m => ({
           name: m.name,
           lang: m.language,
+          text: m.text,
           pct: Math.round(m.similarity * 100)
         }))
       };
@@ -294,6 +297,24 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
     onResolve(clusterId, action);
   };
 
+  const handleDownloadCSV = () => {
+    let csv = 'Cluster ID,Is Master,Record ID,Name,Language,Similarity,Text\n';
+    clusters.forEach((c, idx) => {
+      const cId = `Group-${idx + 1}`;
+      csv += `"${cId}","Yes","${c.anchor.id}","${c.anchor.name.replace(/"/g, '""')}","${c.anchor.language}","1.0","${(c.anchor.text || '').replace(/"/g, '""')}"\n`;
+      c.members.forEach(m => {
+        csv += `"${cId}","No","${m.id}","${m.name.replace(/"/g, '""')}","${m.language}","${m.similarity}","${(m.text || '').replace(/"/g, '""')}"\n`;
+      });
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'jn_ai_duplicates.csv';
+    link.click();
+  };
+
+
   return (
     <div className="comparison-engine-root">
       <header className="ce-header">
@@ -305,6 +326,13 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
           <div className="ce-stat"><div className="ce-stat-val">{resolved}</div><div className="ce-stat-label">Resolved</div></div>
         </div>
         <div className="ce-view-toggle">
+
+          <button className="ce-toggle-btn" onClick={handleDownloadCSV} style={{ color: '#4fd8b4' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Download CSV
+          </button>
+          <div style={{ width: '1px', background: 'rgba(0,0,0,0.1)', margin: '0 4px' }}></div>
+
           <button className={`ce-toggle-btn ${viewMode === '2d' ? 'active' : ''}`} onClick={() => setViewMode('2d')}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/></svg>
             Classic
@@ -343,11 +371,14 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
                     {activeCluster.records.map((r, i) => {
                       const pctColor = r.pct >= 95 ? '#4fd8b4' : r.pct >= 90 ? '#ffaa44' : '#ff5f72';
                       return (
-                        <div className="ce-sidebar-record" key={i}>
-                          <span className="ce-s-num">{i+1}</span>
-                          <span className="ce-s-name">{r.name}</span>
-                          <span className="ce-s-lang">{r.lang}</span>
-                          <span className="ce-s-pct" style={{color: pctColor}}>{r.pct}%</span>
+                        <div className="ce-sidebar-record-wrapper" key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px', background: '#f1f5f9', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '10px', padding: '12px 14px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span className="ce-s-num">{i+1}</span>
+                            <span className="ce-s-name">{r.name}</span>
+                            <span className="ce-s-lang">{r.lang}</span>
+                            <span className="ce-s-pct" style={{color: pctColor, marginLeft: 'auto'}}>{r.pct}%</span>
+                          </div>
+                          {r.text && <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic', paddingLeft: '30px' }}>"{r.text}"</div>}
                         </div>
                       );
                     })}
@@ -372,28 +403,46 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
               const hexColor = '#' + cl.color.toString(16).padStart(6,'0');
               return (
                 <div className="ce-cluster-card" style={{ opacity: isResolved ? 0.45 : 1 }} key={cl.id}>
-                  <div className="ce-cluster-header">
-                    <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                      <div style={{width:'10px', height:'10px', borderRadius:'50%', background: hexColor, flexShrink:0}}></div>
-                      <div className="ce-cluster-name">{cl.master}</div>
-                      <span className="ce-lang-badge">{cl.masterLang}</span>
-                    </div>
-                    <div className="ce-cluster-meta">
-                      <span className="ce-badge ce-badge-sim">{cl.avgSim}% SIM</span>
-                      <span className="ce-badge ce-badge-dup">{cl.records.length} DUPES</span>
-                    </div>
-                  </div>
-                  <div className="ce-record-list">
-                    {cl.records.map((r, i) => (
-                      <div className="ce-record-row" key={i}>
-                        <span className="ce-record-num">{i+1}</span>
-                        <span className="ce-record-name">{r.name}</span>
-                        <span className="ce-lang-badge">{r.lang}</span>
-                        <span className="ce-match-pct">{r.pct}%</span>
+                  <div className="ce-cluster-header" style={{ cursor: 'pointer', marginBottom: expandedCards.has(cl.id) ? '14px' : '0' }} onClick={() => {
+                    setExpandedCards(prev => {
+                      const next = new Set(prev);
+                      if (next.has(cl.id)) next.delete(cl.id);
+                      else next.add(cl.id);
+                      return next;
+                    });
+                  }}>
+                    <div style={{flex: 1}}>
+                      <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom: cl.masterText ? '8px' : '0'}}>
+                        <div style={{width:'10px', height:'10px', borderRadius:'50%', background: hexColor, flexShrink:0}}></div>
+                        <div className="ce-cluster-name">{cl.master}</div>
+                        <span className="ce-lang-badge">{cl.masterLang}</span>
+                        <div className="ce-cluster-meta" style={{marginLeft: 'auto', marginRight: '12px'}}>
+                          <span className="ce-badge ce-badge-sim">{cl.avgSim}% SIM</span>
+                          <span className="ce-badge ce-badge-dup">{cl.records.length} DUPES</span>
+                        </div>
+                        <svg style={{ transform: expandedCards.has(cl.id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: '#64748b' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                       </div>
-                    ))}
+                      {cl.masterText && <div style={{ fontSize: '14px', color: '#64748b', fontStyle: 'italic', paddingLeft: '22px' }}>"{cl.masterText}"</div>}
+                    </div>
                   </div>
-                  <div className="ce-card-actions">
+                  
+                  {expandedCards.has(cl.id) && (
+                    <div className="ce-record-list">
+                      {cl.records.map((r, i) => (
+                        <div className="ce-record-row" key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+                            <span className="ce-record-num">{i+1}</span>
+                            <span className="ce-record-name">{r.name}</span>
+                            <span className="ce-lang-badge">{r.lang}</span>
+                            <span className="ce-match-pct" style={{marginLeft: 'auto'}}>{r.pct}%</span>
+                          </div>
+                          {r.text && <div style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic', paddingLeft: '30px', marginTop: '4px' }}>"{r.text}"</div>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="ce-card-actions" style={{ marginTop: expandedCards.has(cl.id) ? '16px' : '20px' }}>
                     <button className="ce-btn ce-btn-keep" disabled={isResolved} onClick={() => handleResolve2D(cl.id, 'keep')}>✓ Keep All</button>
                     <button className="ce-btn ce-btn-remove" disabled={isResolved} onClick={() => handleResolve2D(cl.id, 'remove')}>✕ Remove</button>
                     <button className="ce-btn ce-btn-merge" disabled={isResolved} onClick={() => handleResolve2D(cl.id, 'merge')}>⊞ Merge</button>
