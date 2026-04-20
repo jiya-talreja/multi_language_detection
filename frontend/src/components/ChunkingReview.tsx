@@ -249,7 +249,6 @@ const ChunkingReview: React.FC<ChunkingReviewProps> = ({ data, originalCount, on
 
   const totalPages = Math.ceil(data.length / PAGE_SIZE);
   const pageData = data.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-  const chunkedCount = data.filter(d => d.is_chunked).length;
   const explosionRatio = (data.length / originalCount).toFixed(1);
 
   return (
