@@ -21,6 +21,10 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
   const [isSearching, setIsSearching] = useState(false);
   const [searchMessage, setSearchMessage] = useState('');
   
+  const sphericalRef = useRef({ theta: 0.3, phi: Math.PI / 2.2, radius: 10 });
+  const targetSphericalRef = useRef({ theta: 0.3, phi: Math.PI / 2.2, radius: 10 });
+  const isTransitioningRef = useRef(false);
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -118,6 +122,22 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
   }, [filteredClusters]);
 
   const activeCluster = activeClusterIndex !== null ? mappedClusters[activeClusterIndex] : null;
+
+  useEffect(() => {
+    if (activeClusterIndex !== null && viewMode === '3d' && mappedClusters[activeClusterIndex]) {
+      const cl = mappedClusters[activeClusterIndex];
+      const r = Math.sqrt(cl.pos.x**2 + cl.pos.y**2 + cl.pos.z**2);
+      const targetPhi = Math.acos(cl.pos.y / r);
+      const targetTheta = Math.atan2(cl.pos.x, cl.pos.z);
+      
+      targetSphericalRef.current = {
+        theta: targetTheta,
+        phi: targetPhi,
+        radius: r + 3.5 // Perfect zoom level to frame the node
+      };
+      isTransitioningRef.current = true;
+    }
+  }, [activeClusterIndex, viewMode, mappedClusters]);
 
   const crossCount = useMemo(() => clusters.filter(c => c.isCrossLingual).length, [clusters]);
   const sameCount = useMemo(() => clusters.filter(c => !c.isCrossLingual).length, [clusters]);
@@ -220,21 +240,25 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
       }
     }
 
-    let isDragging = false, prevMouse = { x: 0, y: 0 };
-    let spherical = { theta: 0.3, phi: Math.PI/2.2, radius: 10 };
-
-    const handleMouseDown = (e: MouseEvent) => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; };
+    const handleMouseDown = (e: MouseEvent) => { 
+      isDragging = true; 
+      isTransitioningRef.current = false; // Stop flying if user interacts
+      prevMouse = { x: e.clientX, y: e.clientY }; 
+    };
     const handleMouseUp = () => { isDragging = false; };
     const handleMouseMoveCam = (e: MouseEvent) => {
       if (!isDragging) return;
       const dx = e.clientX - prevMouse.x;
       const dy = e.clientY - prevMouse.y;
-      spherical.theta -= dx * 0.005;
-      spherical.phi = Math.max(0.3, Math.min(Math.PI - 0.3, spherical.phi - dy * 0.005));
+      sphericalRef.current.theta -= dx * 0.005;
+      sphericalRef.current.phi = Math.max(0.3, Math.min(Math.PI - 0.3, sphericalRef.current.phi - dy * 0.005));
+      targetSphericalRef.current = { ...sphericalRef.current };
       prevMouse = { x: e.clientX, y: e.clientY };
     };
     const handleWheel = (e: WheelEvent) => {
-      spherical.radius = Math.max(5, Math.min(20, spherical.radius + e.deltaY * 0.01));
+      isTransitioningRef.current = false;
+      sphericalRef.current.radius = Math.max(5, Math.min(20, sphericalRef.current.radius + e.deltaY * 0.01));
+      targetSphericalRef.current.radius = sphericalRef.current.radius;
     };
 
     canvas.addEventListener('mousedown', handleMouseDown);
@@ -309,9 +333,30 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, reso
     const animate = () => {
       reqId = requestAnimationFrame(animate);
       t += 0.006;
-      camera.position.x = spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
-      camera.position.y = spherical.radius * Math.cos(spherical.phi);
-      camera.position.z = spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+
+      if (isTransitioningRef.current) {
+        // Smoothly interpolate towards target
+        const lerpFactor = 0.08;
+        
+        // Handle theta wrapping
+        let diffTheta = targetSphericalRef.current.theta - sphericalRef.current.theta;
+        while (diffTheta > Math.PI) diffTheta -= Math.PI * 2;
+        while (diffTheta < -Math.PI) diffTheta += Math.PI * 2;
+        
+        sphericalRef.current.theta += diffTheta * lerpFactor;
+        sphericalRef.current.phi += (targetSphericalRef.current.phi - sphericalRef.current.phi) * lerpFactor;
+        sphericalRef.current.radius += (targetSphericalRef.current.radius - sphericalRef.current.radius) * lerpFactor;
+
+        // Stop transitioning when close enough
+        if (Math.abs(diffTheta) < 0.001 && Math.abs(targetSphericalRef.current.phi - sphericalRef.current.phi) < 0.001) {
+          isTransitioningRef.current = false;
+        }
+      }
+
+      const s = sphericalRef.current;
+      camera.position.x = s.radius * Math.sin(s.phi) * Math.sin(s.theta);
+      camera.position.y = s.radius * Math.cos(s.phi);
+      camera.position.z = s.radius * Math.sin(s.phi) * Math.cos(s.theta);
       camera.lookAt(0, 0, 0);
 
       nodeMeshes.forEach((mesh) => {
