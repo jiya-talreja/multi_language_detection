@@ -6,11 +6,12 @@ interface ComparisonEngineProps {
   clusters: DuplicateCluster[];
   resolved: number;
   resolvedIds: Set<string>;
+  resolvedDecisions: Record<string, {action: string}>;
   onResolve: (clusterId: string, action: 'keep' | 'remove' | 'merge') => void;
   onRedo: (clusterId: string) => void;
 }
 
-export default function ComparisonEngine({ clusters, resolved, resolvedIds, onResolve, onRedo }: ComparisonEngineProps) {
+export default function ComparisonEngine({ clusters, resolved, resolvedIds, resolvedDecisions, onResolve, onRedo }: ComparisonEngineProps) {
   const [viewMode, setViewMode] = useState<'3d' | '2d'>('2d');
   const [activeClusterIndex, setActiveClusterIndex] = useState<number | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -109,7 +110,8 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
           name: m.name,
           lang: m.language,
           text: m.text,
-          pct: Math.round(m.similarity * 100)
+          pct: Math.round(m.similarity * 100),
+          reason: m.reason || 'unknown'
         }))
       };
     });
@@ -360,12 +362,13 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
   };
 
   const handleDownloadCSV = () => {
-    let csv = 'Cluster ID,Is Master,Record ID,Name,Language,Similarity,Text\n';
+    let csv = 'Cluster ID,Is Master,Record ID,Name,Language,Similarity,Text,Action,Reason\n';
     clusters.forEach((c, idx) => {
       const cId = `Group-${idx + 1}`;
-      csv += `"${cId}","Yes","${c.anchor.id}","${c.anchor.name.replace(/"/g, '""')}","${c.anchor.language}","1.0","${(c.anchor.text || '').replace(/"/g, '""')}"\n`;
+      const decision = resolvedDecisions[c.id] || {action: 'Unresolved'};
+      csv += `"${cId}","Yes","${c.anchor.id}","${c.anchor.name.replace(/"/g, '""')}","${c.anchor.language}","1.0","${(c.anchor.text || '').replace(/"/g, '""')}","${decision.action}","original"\n`;
       c.members.forEach(m => {
-        csv += `"${cId}","No","${m.id}","${m.name.replace(/"/g, '""')}","${m.language}","${m.similarity}","${(m.text || '').replace(/"/g, '""')}"\n`;
+        csv += `"${cId}","No","${m.id}","${m.name.replace(/"/g, '""')}","${m.language}","${m.similarity}","${(m.text || '').replace(/"/g, '""')}","${decision.action}","${m.reason || 'unknown'}"\n`;
       });
     });
 
@@ -475,6 +478,7 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
                             <span className="ce-s-num">{i+1}</span>
                             <span className="ce-s-name">{r.name}</span>
                             <span className="ce-s-lang">{r.lang}</span>
+                            <span className={`ce-auto-reason ce-reason-${r.reason.replace('-', '_')}`}>{r.reason}</span>
                             <span className="ce-s-pct" style={{color: pctColor, marginLeft: 'auto'}}>{r.pct}%</span>
                           </div>
                           {r.text && <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic', paddingLeft: '30px' }}>"{r.text}"</div>}
@@ -541,6 +545,7 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
                             <span className="ce-record-num">{i+1}</span>
                             <span className="ce-record-name">{r.name}</span>
                             <span className="ce-lang-badge">{r.lang}</span>
+                            <span className={`ce-auto-reason ce-reason-${r.reason.replace('-', '_')}`}>{r.reason}</span>
                             <span className="ce-match-pct" style={{marginLeft: 'auto'}}>{r.pct}%</span>
                           </div>
                           {r.text && <div style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic', paddingLeft: '30px', marginTop: '4px' }}>"{r.text}"</div>}
@@ -664,6 +669,14 @@ export default function ComparisonEngine({ clusters, resolved, resolvedIds, onRe
         .ce-btn-remove:not(:disabled):hover { background: rgba(255,95,114,0.18); }
         .ce-btn-merge { background: #7c6fff; color: #fff; }
         .ce-btn-merge:not(:disabled):hover { background: #6a5ef0; }
+
+        .ce-auto-reason { font-size: 10px; font-family: 'DM Mono', monospace; padding: 2px 7px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .ce-reason-typo { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+        .ce-reason-cross_lang { background: rgba(124, 111, 255, 0.1); color: #7c6fff; }
+        .ce-reason-cross_language { background: rgba(124, 111, 255, 0.1); color: #7c6fff; }
+        .ce-reason-exact { background: rgba(16, 185, 129, 0.1); color: #059669; }
+        .ce-reason-noise { background: rgba(100, 116, 139, 0.1); color: #475569; }
+        .ce-reason-codemix { background: rgba(236, 72, 153, 0.1); color: #db2777; }
 
         .ce-sidebar {
           position: absolute; top: 0; right: 0; bottom: 0; width: 380px;
